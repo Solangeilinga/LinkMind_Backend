@@ -1,339 +1,223 @@
-/**
- * Seed script — populates the Challenge collection with initial data.
- * Run: node src/scripts/seed-challenges.js
- */
-require('dotenv').config();
-const mongoose = require('mongoose');
-const { Challenge } = require('../models/challenge.model');
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/linkmind';
-
+// Défis de base
 const challenges = [
-  // ── BREATHING ────────────────────────────────────────────────────
+  // 1. Défi avec timer
   {
-    title: 'Respiration 4-7-8',
-    description: 'Expire le stress avec cette technique ancienne et efficace.',
+    title: "Respiration 4-7-8",
+    description: "Une technique de respiration apaisante pour réduire le stress et l'anxiété",
+    icon: "🌬️",
+    category: "breathing",
+    difficulty: "easy",
+    completionType: {
+      type: "timer",
+      config: {
+        stepDuration: 8,
+        totalDuration: 120,
+        stepsCount: 4
+      }
+    },
+    points: 50,
     instructions: [
-      'Expire complètement par la bouche',
-      'Inspire par le nez pendant 4 secondes',
-      'Retiens ta respiration pendant 7 secondes',
-      'Expire lentement par la bouche pendant 8 secondes',
-      'Répète 4 cycles',
+      "Inspire profondément par le nez pendant 4 secondes",
+      "Retiens ta respiration pendant 7 secondes",
+      "Expire lentement par la bouche pendant 8 secondes",
+      "Répète l'exercice 3 fois"
     ],
-    category: 'breathing',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 15,
-    icon: '🌬️',
-    targetMoods: ['stressed', 'anxious'],
-    isActive: true,
+    moodTags: ["stress", "anxiety", "calm"]
   },
+  
+  // 2. Défi d'action simple
   {
-    title: 'Respiration carrée',
-    description: 'Stabilise ton système nerveux avec la cohérence cardiaque.',
+    title: "Publier un message positif",
+    description: "Partage quelque chose de positif dans la communauté",
+    icon: "💬",
+    category: "social",
+    difficulty: "easy",
+    completionType: {
+      type: "action",
+      config: {
+        validationEndpoint: "/community/posts",
+        checkUserAction: true,
+        targetType: "post"
+      }
+    },
+    points: 75,
     instructions: [
-      'Inspire pendant 4 secondes',
-      'Retiens pendant 4 secondes',
-      'Expire pendant 4 secondes',
-      'Retiens pendant 4 secondes',
-      'Répète 6 cycles',
+      "Va dans l'onglet Communauté",
+      "Clique sur le bouton 'Partager'",
+      "Écris un message inspirant ou un conseil",
+      "Publie ton post"
     ],
-    category: 'breathing',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 15,
-    icon: '⬜',
-    targetMoods: ['stressed', 'anxious', 'neutral'],
-    isActive: true,
+    moodTags: ["happy", "motivated"]
   },
+  
+  // 3. Défi de réflexion
   {
-    title: 'Respiration abdominale',
-    description: 'Apprends à respirer profondément pour calmer le corps.',
+    title: "Journal de gratitude",
+    description: "Prends un moment pour apprécier les bonnes choses de ta vie",
+    icon: "🙏",
+    category: "gratitude",
+    difficulty: "easy",
+    completionType: {
+      type: "reflection",
+      config: {
+        requiresInput: true,
+        minWords: 10,
+        inputPlaceholder: "Écris 3 choses pour lesquelles tu es reconnaissant aujourd'hui..."
+      }
+    },
+    points: 100,
     instructions: [
-      'Pose une main sur le ventre, une sur la poitrine',
-      'Inspire en gonflant le ventre (pas la poitrine)',
-      'Expire lentement en rentrant le ventre',
-      'Répète 10 fois en conscience',
+      "Prends un moment calme",
+      "Pense à 3 choses positives de ta journée",
+      "Note-les et explique pourquoi elles comptent"
     ],
-    category: 'breathing',
-    difficulty: 'easy',
-    durationMinutes: 3,
-    points: 10,
-    icon: '💨',
-    targetMoods: ['tired', 'sad', 'stressed'],
-    isActive: true,
+    moodTags: ["gratitude", "calm", "happy"]
   },
-
-  // ── MEDITATION ───────────────────────────────────────────────────
+  
+  // 4. Défi social
   {
-    title: 'Scan corporel 5 minutes',
-    description: 'Parcours ton corps de la tête aux pieds pour relâcher les tensions.',
+    title: "Soutenir un membre",
+    description: "Apporte du soutien à un autre membre de la communauté",
+    icon: "🤝",
+    category: "social",
+    difficulty: "medium",
+    completionType: {
+      type: "social",
+      config: {
+        requiresInteraction: true,
+        targetType: "comment",
+        validationEndpoint: "/community/interactions"
+      }
+    },
+    points: 80,
     instructions: [
-      'Allonge-toi ou assieds-toi confortablement',
-      'Ferme les yeux et respire naturellement',
-      'Concentre-toi sur tes pieds — sens les sensations',
-      'Remonte lentement : jambes, ventre, poitrine, bras, tête',
-      'À chaque zone, relâche consciemment la tension',
+      "Trouve un post dans la communauté",
+      "Laisse un commentaire encourageant",
+      "Ou utilise la réaction 'Moi aussi' sur un post"
     ],
-    category: 'meditation',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 15,
-    icon: '🧘',
-    targetMoods: ['tired', 'stressed', 'anxious'],
-    isActive: true,
+    moodTags: ["support", "connection"]
   },
+  
+  // 5. Défi de mouvement
   {
-    title: 'Pleine conscience 10 min',
-    description: 'Observe tes pensées sans jugement pendant 10 minutes.',
+    title: "5 minutes d'étirements",
+    description: "Bouge ton corps pour relâcher les tensions",
+    icon: "🧘",
+    category: "movement",
+    difficulty: "easy",
+    completionType: {
+      type: "timer",
+      config: {
+        stepDuration: 60,
+        totalDuration: 300,
+        stepsCount: 5
+      }
+    },
+    points: 60,
     instructions: [
-      'Assieds-toi dans un endroit calme',
-      'Pose les mains sur les genoux',
-      'Focalise ton attention sur ta respiration',
-      'Quand une pensée arrive, observe-la sans la suivre',
-      'Ramène doucement ton attention à la respiration',
+      "Étire ton cou doucement (1 min)",
+      "Étire tes épaules (1 min)",
+      "Étire ton dos (1 min)",
+      "Étire tes jambes (1 min)",
+      "Respire profondément (1 min)"
     ],
-    category: 'meditation',
-    difficulty: 'medium',
-    durationMinutes: 10,
-    points: 25,
-    icon: '🌿',
-    targetMoods: ['neutral', 'good'],
-    isActive: true,
+    moodTags: ["stress", "fatigue", "energy"]
   },
-
-  // ── JOURNALING ───────────────────────────────────────────────────
+  
+  // 6. Défi d'exploration
   {
-    title: 'Vide mental express',
-    description: 'Écris tout ce qui te pèse l\'esprit sans filtre pendant 5 minutes.',
+    title: "Découvrir un professionnel",
+    description: "Explore les professionnels disponibles",
+    icon: "🩺",
+    category: "exploration",
+    difficulty: "easy",
+    completionType: {
+      type: "exploration",
+      config: {
+        targetScreen: "professionals",
+        validationEndpoint: "/professionals/view",
+        checkUserAction: true
+      }
+    },
+    points: 50,
     instructions: [
-      'Prends une feuille ou ton téléphone',
-      'Mets un timer de 5 minutes',
-      'Écris tout ce qui te passe par la tête sans t\'arrêter',
-      'Ne relis pas, ne corrige pas — laisse couler',
-      'À la fin, froisse la feuille ou efface le texte si tu veux',
+      "Va dans l'onglet Professionnels",
+      "Consulte le profil d'au moins un psychologue",
+      "Regarde ses disponibilités et spécialités"
     ],
-    category: 'journaling',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 10,
-    icon: '✍️',
-    targetMoods: ['stressed', 'anxious', 'sad'],
-    isActive: true,
+    moodTags: ["curious", "seeking_help"]
   },
+  
+  // 7. Défi créatif
   {
-    title: '3 choses positives',
-    description: 'Note 3 moments positifs d\'aujourd\'hui, aussi petits soient-ils.',
+    title: "Dessiner ses émotions",
+    description: "Exprime ce que tu ressens par le dessin",
+    icon: "🎨",
+    category: "creativity",
+    difficulty: "medium",
+    completionType: {
+      type: "reflection",
+      config: {
+        requiresInput: true,
+        inputPlaceholder: "Décris ce que tu as dessiné et ce que ça représente pour toi...",
+        minWords: 5
+      }
+    },
+    points: 120,
     instructions: [
-      'Prends un moment calme',
-      'Pense à ta journée',
-      'Écris 3 choses positives, même minimes (un sourire, un repas, un compliment)',
-      'Pour chacune, écris pourquoi elle compte pour toi',
+      "Prends une feuille et un crayon",
+      "Dessine ce que tu ressens en ce moment",
+      "Pas besoin d'être artiste, exprime-toi librement",
+      "Décris brièvement ton dessin"
     ],
-    category: 'gratitude',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 10,
-    icon: '🙏',
-    targetMoods: ['sad', 'neutral', 'tired'],
-    isActive: true,
+    moodTags: ["creative", "emotional"]
   },
+  
+  // 8. Défi de méditation
   {
-    title: 'Lettre à toi-même',
-    description: 'Écris une lettre bienveillante à la version de toi qui souffre.',
+    title: "Méditation 5 minutes",
+    description: "Calme ton esprit avec une courte méditation guidée",
+    icon: "🧘‍♀️",
+    category: "meditation",
+    difficulty: "medium",
+    completionType: {
+      type: "timer",
+      config: {
+        stepDuration: 60,
+        totalDuration: 300,
+        stepsCount: 5
+      }
+    },
+    points: 90,
     instructions: [
-      'Commence par "Cher(e) [ton prénom]..."',
-      'Décris ce que tu ressens en ce moment',
-      'Écris ce que tu dirais à un ami dans la même situation',
-      'Termine par une phrase d\'encouragement sincère',
+      "Assieds-toi confortablement",
+      "Ferme les yeux et respire calmement (1 min)",
+      "Observe tes pensées sans jugement (1 min)",
+      "Concentre-toi sur ta respiration (1 min)",
+      "Ramasse doucement ton attention (1 min)",
+      "Ouvre les yeux en douceur (1 min)"
     ],
-    category: 'journaling',
-    difficulty: 'medium',
-    durationMinutes: 10,
-    points: 20,
-    icon: '💌',
-    targetMoods: ['sad', 'anxious', 'tired'],
-    isActive: true,
-  },
-
-  // ── GRATITUDE ────────────────────────────────────────────────────
-  {
-    title: 'Gratitude minute',
-    description: 'Exprime de la gratitude pour une chose dans ta vie en ce moment.',
-    instructions: [
-      'Ferme les yeux 30 secondes',
-      'Pense à une personne ou chose pour laquelle tu es reconnaissant(e)',
-      'Ressens vraiment cette gratitude dans ta poitrine',
-      'Si c\'est une personne, envoie-lui un message court',
-    ],
-    category: 'gratitude',
-    difficulty: 'easy',
-    durationMinutes: 2,
-    points: 10,
-    icon: '💛',
-    targetMoods: ['neutral', 'sad', 'tired'],
-    isActive: true,
-  },
-
-  // ── MOVEMENT ─────────────────────────────────────────────────────
-  {
-    title: 'Marche consciente 10 min',
-    description: 'Marche lentement en observant chaque pas et ton environnement.',
-    instructions: [
-      'Sors ou trouve un couloir',
-      'Marche à vitesse normale, sans téléphone',
-      'Observe ce que tu vois, entends, ressens',
-      'Si une pensée arrive, reconnecte-toi aux sensations physiques',
-    ],
-    category: 'movement',
-    difficulty: 'easy',
-    durationMinutes: 10,
-    points: 15,
-    icon: '🚶',
-    targetMoods: ['stressed', 'tired', 'sad'],
-    isActive: true,
-  },
-  {
-    title: 'Étirements anti-stress',
-    description: '5 étirements simples pour libérer les tensions accumulées.',
-    instructions: [
-      'Roulement des épaules : 10x vers l\'avant, 10x vers l\'arrière',
-      'Étirement du cou : incliner la tête de chaque côté, tenir 15s',
-      'Rotation du dos assis : tourner le buste à gauche puis à droite',
-      'Extension des bras : lever les bras, s\'étirer vers le haut',
-      'Respire profondément entre chaque exercice',
-    ],
-    category: 'movement',
-    difficulty: 'easy',
-    durationMinutes: 7,
-    points: 15,
-    icon: '🤸',
-    targetMoods: ['stressed', 'tired', 'neutral'],
-    isActive: true,
-  },
-
-  // ── SOCIAL ───────────────────────────────────────────────────────
-  {
-    title: 'Message d\'encouragement',
-    description: 'Envoie un message positif à quelqu\'un que tu n\'as pas contacté récemment.',
-    instructions: [
-      'Pense à un ami, camarade ou membre de ta famille',
-      'Écris un message sincère de 2-3 phrases',
-      'Pas besoin d\'occasion — juste dire que tu penses à eux',
-      'Envoie-le !',
-    ],
-    category: 'social',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 15,
-    icon: '💬',
-    targetMoods: ['good', 'great', 'neutral'],
-    isActive: true,
-  },
-  {
-    title: 'Partage dans la communauté',
-    description: 'Partage une expérience ou encourage un autre étudiant anonymement.',
-    instructions: [
-      'Ouvre l\'onglet Communauté',
-      'Lis 2-3 publications récentes',
-      'Laisse un commentaire bienveillant ou encourageant',
-      'Ou partage ton propre vécu anonymement',
-    ],
-    category: 'social',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 10,
-    icon: '🤝',
-    targetMoods: ['neutral', 'good', 'great'],
-    isActive: true,
-  },
-
-  // ── CREATIVITY ───────────────────────────────────────────────────
-  {
-    title: 'Dessin libre 5 min',
-    description: 'Dessine ce que tu ressens sans te soucier du résultat.',
-    instructions: [
-      'Prends une feuille et un crayon',
-      'Pas de contrainte — cercles, lignes, gribouillages, tout est permis',
-      'Laisse ta main bouger librement pendant 5 minutes',
-      'Observe ce qui est sorti sans jugement',
-    ],
-    category: 'creativity',
-    difficulty: 'easy',
-    durationMinutes: 5,
-    points: 10,
-    icon: '🎨',
-    targetMoods: ['stressed', 'sad', 'neutral'],
-    isActive: true,
-  },
-
-  // ── CHALLENGES AVANCÉS ───────────────────────────────────────────
-  {
-    title: 'Défi Pomodoro étudiant',
-    description: 'Travaille 25 minutes sans distraction, puis pause 5 minutes.',
-    instructions: [
-      'Choisis UNE tâche à faire',
-      'Mets ton téléphone en mode silencieux',
-      'Travaille pendant 25 minutes sans interruption',
-      'Prends une pause de 5 minutes',
-      'Répète 4 cycles puis pause longue de 20 min',
-    ],
-    category: 'game',
-    difficulty: 'medium',
-    durationMinutes: 30,
-    points: 30,
-    icon: '🍅',
-    targetMoods: ['neutral', 'good', 'great'],
-    isActive: true,
-  },
-  {
-    title: 'Déconnexion numérique 1h',
-    description: 'Passe 1 heure sans réseaux sociaux ni distractions digitales.',
-    instructions: [
-      'Coupe les notifications',
-      'Mets ton téléphone dans une autre pièce ou face retournée',
-      'Utilise ce temps pour lire, marcher, ou te reposer',
-      'Note comment tu te sens après',
-    ],
-    category: 'game',
-    difficulty: 'hard',
-    durationMinutes: 60,
-    points: 40,
-    icon: '📵',
-    targetMoods: ['stressed', 'tired', 'neutral'],
-    isActive: true,
-  },
+    moodTags: ["stress", "anxiety", "overwhelmed"]
+  }
 ];
 
-async function seed() {
-  try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connecté à MongoDB');
+// Catégories
+const challengeCategories = [
+  { id: "breathing", label: "Respiration", labelPlural: "Respiration", emoji: "🌬️", color: "#6C5CE7", order: 1 },
+  { id: "meditation", label: "Méditation", labelPlural: "Méditation", emoji: "🧘", color: "#A66ADE", order: 2 },
+  { id: "gratitude", label: "Gratitude", labelPlural: "Gratitude", emoji: "🙏", color: "#00B894", order: 3 },
+  { id: "movement", label: "Mouvement", labelPlural: "Mouvement", emoji: "🏃", color: "#FDCB6E", order: 4 },
+  { id: "social", label: "Social", labelPlural: "Social", emoji: "👥", color: "#E84393", order: 5 },
+  { id: "creativity", label: "Créativité", labelPlural: "Créativité", emoji: "🎨", color: "#FF7675", order: 6 },
+  { id: "exploration", label: "Exploration", labelPlural: "Exploration", emoji: "🔍", color: "#74B9FF", order: 7 },
+  { id: "reflection", label: "Réflexion", labelPlural: "Réflexion", emoji: "💭", color: "#55EFC4", order: 8 }
+];
 
-    // Clear existing challenges
-    const deleted = await Challenge.deleteMany({});
-    console.log(`🗑️  ${deleted.deletedCount} défis supprimés`);
+// Difficultés
+const challengeDifficulties = [
+  { id: "easy", label: "Facile", color: "#6BCF7F", pointsMultiplier: 1, order: 1 },
+  { id: "medium", label: "Moyen", color: "#FFD93D", pointsMultiplier: 1.5, order: 2 },
+  { id: "hard", label: "Difficile", color: "#FF7675", pointsMultiplier: 2, order: 3 }
+];
 
-    // Insert new ones
-    const inserted = await Challenge.insertMany(challenges);
-    console.log(`✅ ${inserted.length} défis insérés`);
-
-    // Summary by category
-    const categories = {};
-    inserted.forEach(c => {
-      categories[c.category] = (categories[c.category] || 0) + 1;
-    });
-    console.log('\n📊 Résumé par catégorie :');
-    Object.entries(categories).forEach(([cat, count]) => {
-      console.log(`   ${cat}: ${count} défi(s)`);
-    });
-
-    console.log('\n🎉 Seed terminé avec succès !');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Erreur seed:', error.message);
-    process.exit(1);
-  }
-}
-
-seed();
+module.exports = { challenges, challengeCategories, challengeDifficulties };

@@ -25,11 +25,17 @@ exports.getDailyChallenges = async (req, res, next) => {
     let challenges;
     if (moodLabel) {
       // Get mood-specific + general challenges
-      const targeted = await Challenge.find({ ...filter, targetMoods: moodLabel }).limit(3);
-      const general = await Challenge.find({ ...filter, targetMoods: { $size: 0 } }).limit(2);
+      const targeted = await Challenge.find({ ...filter, targetMoods: moodLabel })
+        .sort({ order: 1 })
+        .limit(3);
+      const general = await Challenge.find({ ...filter, targetMoods: { $size: 0 } })
+        .sort({ order: 1 })
+        .limit(2);
       challenges = [...targeted, ...general];
     } else {
-      challenges = await Challenge.find(filter).limit(5);
+      challenges = await Challenge.find(filter)
+        .sort({ order: 1 })
+        .limit(5);
     }
 
     // Get today's completions to mark completed challenges
@@ -51,6 +57,19 @@ exports.getDailyChallenges = async (req, res, next) => {
   }
 };
 
+// GET /api/challenges/:id
+exports.getChallengeById = async (req, res, next) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id);
+    if (!challenge || !challenge.isActive) {
+      return res.status(404).json({ error: 'Challenge not found' });
+    }
+    res.json({ challenge });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/challenges — all challenges
 exports.getAllChallenges = async (req, res, next) => {
   try {
@@ -61,6 +80,7 @@ exports.getAllChallenges = async (req, res, next) => {
     if (difficulty) filter.difficulty = difficulty;
 
     const challenges = await Challenge.find(filter)
+      .sort({ order: 1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     const total = await Challenge.countDocuments(filter);
@@ -75,7 +95,7 @@ exports.getAllChallenges = async (req, res, next) => {
 exports.completeChallenge = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { durationSeconds, moodId, feedback } = req.body;
+    const { durationSeconds, moodId, reflection, feedback } = req.body;
     const user = req.user;
     const today = new Date().toISOString().split('T')[0];
 
@@ -86,9 +106,18 @@ exports.completeChallenge = async (req, res, next) => {
     }
 
     // Check if already completed today
-    const existing = await ChallengeCompletion.findOne({ user: user._id, challenge: id, date: today });
+    const existing = await ChallengeCompletion.findOne({ 
+      user: user._id, 
+      challenge: id, 
+      date: today 
+    });
     if (existing) {
       return res.status(409).json({ error: 'Already completed today', pointsEarned: 0 });
+    }
+
+    // Vérifie si le défi de type reflection nécessite une réponse
+    if (challenge.completionType.type === 'reflection' && !reflection) {
+      return res.status(400).json({ error: 'A reflection is required for this challenge' });
     }
 
     // Create completion
@@ -98,6 +127,7 @@ exports.completeChallenge = async (req, res, next) => {
       date: today,
       pointsEarned: challenge.points,
       durationSeconds,
+      reflection: reflection || null,
       mood: moodId || null,
       feedback,
     });
@@ -129,11 +159,11 @@ exports.completeChallenge = async (req, res, next) => {
 exports.submitFeedback = async (req, res, next) => {
   try {
     const { completionId } = req.params;
-    const { helpful, rating } = req.body;
+    const { helpful, rating, comment } = req.body;
 
     const completion = await ChallengeCompletion.findOneAndUpdate(
       { _id: completionId, user: req.user._id },
-      { feedback: { helpful, rating } },
+      { feedback: { helpful, rating, comment } },
       { new: true }
     );
 
@@ -168,6 +198,30 @@ exports.getHistory = async (req, res, next) => {
       total,
       totalPointsEarned: totalPointsFromChallenges[0]?.total || 0,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/challenges/categories
+exports.getChallengeCategories = async (req, res, next) => {
+  try {
+    const { ChallengeCategory } = require('../models/content.model');
+    const categories = await ChallengeCategory.find({ isActive: true })
+      .sort({ order: 1 });
+    res.json({ categories });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/challenges/difficulties
+exports.getChallengeDifficulties = async (req, res, next) => {
+  try {
+    const { ChallengeDifficulty } = require('../models/content.model');
+    const difficulties = await ChallengeDifficulty.find({ isActive: true })
+      .sort({ order: 1 });
+    res.json({ difficulties });
   } catch (error) {
     next(error);
   }

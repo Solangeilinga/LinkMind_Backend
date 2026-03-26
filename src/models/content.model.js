@@ -43,47 +43,47 @@ const wellnessTipSchema = new mongoose.Schema({
   order:       { type: Number, default: 0 },
 }, { timestamps: true });
 
-
 // ─── Mood Definition ──────────────────────────────────────────────────────────
 const moodDefinitionSchema = new mongoose.Schema({
   id:       { type: String, required: true, unique: true },
   label:    { type: String, required: true, trim: true },
   emoji:    { type: String, required: true },
   score:    { type: Number, required: true, min: 1, max: 5 },
-  colorHex: { type: String, default: '#77021D' }, // couleur UI
+  colorHex: { type: String, default: '#77021D' },
   order:    { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
 // ─── Professional Type ────────────────────────────────────────────────────────
 const professionalTypeSchema = new mongoose.Schema({
-  id:       { type: String, required: true, unique: true }, // 'psychologist', 'coach', 'doctor'
-  label:    { type: String, required: true, trim: true },   // 'Psychologue'
-  labelPlural: { type: String, trim: true },                // 'Psychologues'
-  emoji:    { type: String, default: '🧑‍⚕️' },
-  colorHex: { type: String, default: '#77021D' },
-  isActive: { type: Boolean, default: true },
-  order:    { type: Number, default: 0 },
+  id:          { type: String, required: true, unique: true }, // 'psychologist', 'coach', 'doctor'
+  label:       { type: String, required: true, trim: true },   // 'Psychologue'
+  labelPlural: { type: String, trim: true },                   // 'Psychologues'
+  emoji:       { type: String, default: '🧑‍⚕️' },
+  colorHex:    { type: String, default: '#77021D' },
+  isActive:    { type: Boolean, default: true },
+  order:       { type: Number, default: 0 },
 }, { timestamps: true });
-
 
 // ─── Challenge Category ───────────────────────────────────────────────────────
 const challengeCategorySchema = new mongoose.Schema({
-  id:       { type: String, required: true, unique: true },
-  label:    { type: String, required: true, trim: true },
-  emoji:    { type: String, default: '⚡' },
-  colorHex: { type: String, default: '#77021D' },
-  isActive: { type: Boolean, default: true },
-  order:    { type: Number, default: 0 },
+  id:          { type: String, required: true, unique: true },
+  label:       { type: String, required: true, trim: true },
+  labelPlural: { type: String, trim: true },
+  emoji:       { type: String, default: '⚡' },
+  colorHex:    { type: String, default: '#77021D' },
+  isActive:    { type: Boolean, default: true },
+  order:       { type: Number, default: 0 },
 }, { timestamps: true });
 
 // ─── Challenge Difficulty ─────────────────────────────────────────────────────
 const challengeDifficultySchema = new mongoose.Schema({
-  id:       { type: String, required: true, unique: true }, // 'easy', 'medium', 'hard'
-  label:    { type: String, required: true, trim: true },
-  colorHex: { type: String, default: '#77021D' },
-  order:    { type: Number, default: 0 },
-  isActive: { type: Boolean, default: true },
+  id:            { type: String, required: true, unique: true }, // 'easy', 'medium', 'hard'
+  label:         { type: String, required: true, trim: true },
+  colorHex:      { type: String, default: '#77021D' },
+  pointsMultiplier: { type: Number, default: 1 },
+  order:         { type: Number, default: 0 },
+  isActive:      { type: Boolean, default: true },
 }, { timestamps: true });
 
 // ─── Post Type ────────────────────────────────────────────────────────────────
@@ -97,6 +97,7 @@ const postTypeSchema = new mongoose.Schema({
   order:    { type: Number, default: 0 },
 }, { timestamps: true });
 
+// Exports
 module.exports = {
   Badge:               mongoose.model('Badge',               badgeSchema),
   StressFactor:        mongoose.model('StressFactor',        stressFactorSchema),
