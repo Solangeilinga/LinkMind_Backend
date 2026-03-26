@@ -1,6 +1,57 @@
 const { Challenge, ChallengeCompletion } = require('../models/challenge.model');
 const User = require('../models/user.model');
-const { checkBadges } = require('../services/badge.service');
+const { Badge, UserBadge } = require('../models/content.model');
+
+// Fonction utilitaire pour vérifier les badges
+async function checkAndAwardBadges(user, challenge) {
+  const newBadges = [];
+  
+  try {
+    // Compter le nombre total de défis complétés
+    const totalCompletions = await ChallengeCompletion.countDocuments({ user: user._id });
+    
+    // Récupérer tous les badges actifs
+    const badges = await Badge.find({ isActive: true });
+    
+    for (const badge of badges) {
+      // Vérifier si l'utilisateur a déjà ce badge
+      const hasBadge = await UserBadge.findOne({ user: user._id, badge: badge._id });
+      if (hasBadge) continue;
+      
+      // Vérifier les critères
+      let earned = false;
+      if (badge.condition?.type === 'challenge_count' && 
+          totalCompletions >= (badge.condition?.threshold || 0)) {
+        earned = true;
+      } else if (badge.condition?.type === 'points' && 
+                 user.totalPoints >= (badge.condition?.threshold || 0)) {
+        earned = true;
+      } else if (badge.condition?.type === 'streak_days' && 
+                 user.streakDays >= (badge.condition?.threshold || 0)) {
+        earned = true;
+      }
+      
+      if (earned) {
+        await UserBadge.create({
+          user: user._id,
+          badge: badge._id,
+          earnedAt: new Date(),
+          challengeId: challenge._id
+        });
+        newBadges.push({
+          id: badge.id,
+          name: badge.name,
+          icon: badge.icon,
+          description: badge.description
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking badges:', error);
+  }
+  
+  return newBadges;
+}
 
 // GET /api/challenges/daily
 exports.getDailyChallenges = async (req, res, next) => {
@@ -64,7 +115,20 @@ exports.getChallengeById = async (req, res, next) => {
     if (!challenge || !challenge.isActive) {
       return res.status(404).json({ error: 'Challenge not found' });
     }
-    res.json({ challenge });
+    
+    const today = new Date().toISOString().split('T')[0];
+    const completion = await ChallengeCompletion.findOne({
+      user: req.user._id,
+      challenge: challenge._id,
+      date: today,
+    });
+    
+    const result = {
+      ...challenge.toObject(),
+      isCompleted: completion != null,
+    };
+    
+    res.json({ challenge: result });
   } catch (error) {
     next(error);
   }
@@ -85,7 +149,20 @@ exports.getAllChallenges = async (req, res, next) => {
       .limit(parseInt(limit));
     const total = await Challenge.countDocuments(filter);
 
-    res.json({ challenges, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+    // Marquer les défis complétés aujourd'hui
+    const today = new Date().toISOString().split('T')[0];
+    const completions = await ChallengeCompletion.find({
+      user: req.user._id,
+      date: today,
+    }).select('challenge');
+    const completedIds = completions.map(c => c.challenge.toString());
+
+    const result = challenges.map(c => ({
+      ...c.toObject(),
+      isCompleted: completedIds.includes(c._id.toString()),
+    }));
+
+    res.json({ challenges: result, total, page: parseInt(page), pages: Math.ceil(total / limit) });
   } catch (error) {
     next(error);
   }
@@ -133,13 +210,13 @@ exports.completeChallenge = async (req, res, next) => {
     });
 
     // Award points
-    user.totalPoints += challenge.points;
+    user.totalPoints = (user.totalPoints || 0) + challenge.points;
     user.updateLevel();
     user.updateStreak();
     await user.save({ validateBeforeSave: false });
 
     // Check for new badges
-    const newBadges = await checkBadges(user);
+    const newBadges = await checkAndAwardBadges(user, challenge);
 
     res.json({
       message: 'Challenge completed!',
@@ -151,6 +228,7 @@ exports.completeChallenge = async (req, res, next) => {
       completion,
     });
   } catch (error) {
+    console.error('Error completing challenge:', error);
     next(error);
   }
 };
