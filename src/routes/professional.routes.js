@@ -13,6 +13,8 @@ router.get('/bookings/me',                   c.myBookings);
 router.get('/bookings/admin',                requireAdmin, c.allBookings);
 router.post('/bookings/:bookingId/confirm',  requireAdmin, c.confirmBooking);
 router.post('/bookings/:bookingId/cancel',   requireAdmin, c.cancelBooking);
+router.put('/bookings/:id', c.updateBooking);      // ✅ AJOUT : Modifier une demande
+router.delete('/bookings/:id', c.deleteBooking);  
 
 // Routes paramétrées en DERNIER
 router.get('/:id',                           c.detail);

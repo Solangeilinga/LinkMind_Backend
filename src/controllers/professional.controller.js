@@ -287,3 +287,96 @@ exports.allBookings = async (req, res, next) => {
     res.json({ bookings: sanitized, total, page: parseInt(page) });
   } catch (err) { next(err); }
 };
+
+
+// ─── PUT /api/professionals/bookings/:id (modifier une demande en attente) ───
+exports.updateBooking = async (req, res, next) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user._id;
+    const { sessionType, preferredDate, reason } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ error: 'ID de réservation invalide' });
+    }
+
+    const booking = await Booking.findOne({ 
+      _id: bookingId, 
+      user: userId,
+      status: 'pending' // Seulement les demandes en attente
+    }).populate('professional', 'isOnline isInPerson');
+
+    if (!booking) {
+      return res.status(404).json({ 
+        error: 'Demande introuvable ou déjà traitée. Seules les demandes en attente peuvent être modifiées.' 
+      });
+    }
+
+    // Vérifier si le type de session est toujours disponible
+    if (sessionType) {
+      if (sessionType === 'online' && !booking.professional.isOnline) {
+        return res.status(400).json({ error: "Ce professionnel ne propose plus de consultation en ligne" });
+      }
+      if (sessionType === 'in_person' && !booking.professional.isInPerson) {
+        return res.status(400).json({ error: "Ce professionnel ne propose plus de consultation en présentiel" });
+      }
+      booking.sessionType = sessionType;
+    }
+
+    if (preferredDate) booking.preferredDate = preferredDate;
+    if (reason !== undefined) booking.reason = reason; // Permet de vider le champ
+
+    booking.updatedAt = new Date();
+    await booking.save();
+
+    res.json({ 
+      message: 'Demande modifiée avec succès',
+      booking: {
+        _id: booking._id,
+        status: booking.status,
+        sessionType: booking.sessionType,
+        preferredDate: booking.preferredDate,
+        reason: booking.reason,
+        updatedAt: booking.updatedAt
+      }
+    });
+  } catch (err) { 
+    console.error('❌ [UPDATE_BOOKING] Erreur:', err);
+    next(err); 
+  }
+};
+
+// ─── DELETE /api/professionals/bookings/:id (annuler une demande en attente) ───
+exports.deleteBooking = async (req, res, next) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ error: 'ID de réservation invalide' });
+    }
+
+    const booking = await Booking.findOne({ 
+      _id: bookingId, 
+      user: userId,
+      status: 'pending' // Seulement les demandes en attente
+    });
+
+    if (!booking) {
+      return res.status(404).json({ 
+        error: 'Demande introuvable ou déjà traitée. Seules les demandes en attente peuvent être annulées.' 
+      });
+    }
+
+    // Supprimer définitivement la demande
+    await booking.deleteOne();
+
+    res.json({ 
+      message: 'Demande annulée avec succès',
+      deleted: true
+    });
+  } catch (err) { 
+    console.error('❌ [DELETE_BOOKING] Erreur:', err);
+    next(err); 
+  }
+};
