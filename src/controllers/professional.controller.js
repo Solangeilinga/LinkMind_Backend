@@ -87,6 +87,7 @@ exports.detail = async (req, res, next) => {
 };
 
 // ─── POST /api/professionals/:id/book ─────────────────────────────────────────
+// ✅ CORRIGÉ : Utilise consultationType et message (frontend)
 exports.book = async (req, res, next) => {
   try {
     if (!req.user?._id) return res.status(401).json({ error: 'Utilisateur non authentifié' });
@@ -95,7 +96,11 @@ exports.book = async (req, res, next) => {
       return res.status(400).json({ error: 'ID professionnel invalide' });
     }
 
-    const { sessionType, preferredDate, reason, isAnonymous = true } = req.body;
+    // ✅ Changé: sessionType → consultationType, reason → message
+    const { consultationType, preferredDate, message, isAnonymous = true } = req.body;
+    
+    // Convert consultationType to sessionType for database
+    const sessionType = consultationType === 'online' ? 'online' : 'in_person';
 
     const pro = await Professional.findOne({
       _id: req.params.id,
@@ -121,12 +126,13 @@ exports.book = async (req, res, next) => {
     const existing = await Booking.findOne({ user: req.user._id, professional: pro._id, status: 'pending' });
     if (existing) return res.status(409).json({ error: 'Tu as déjà une demande en attente avec ce professionnel.' });
 
+    // ✅ Changé: reason → message
     const booking = await Booking.create({
       user: req.user._id,
       professional: pro._id,
-      sessionType: sessionType || 'online',
+      sessionType: sessionType,
       preferredDate,
-      reason,
+      message: message,  // Stocke message au lieu de reason
       isAnonymous,
       sessionPrice:     pro.sessionPrice,
       commissionRate:   pro.commissionRate,
@@ -134,11 +140,21 @@ exports.book = async (req, res, next) => {
       status: 'pending',
     });
 
+    console.log('✅ Demande créée:', {
+      id: booking._id,
+      sessionType: booking.sessionType,
+      preferredDate: booking.preferredDate,
+      message: booking.message
+    });
+
     res.status(201).json({
       message: "Demande envoyée. L'équipe LinkMind va la valider et le professionnel sera contacté.",
       booking: { _id: booking._id, id: booking._id, status: booking.status, createdAt: booking.createdAt },
     });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    console.error('❌ [BOOK] Erreur:', err);
+    next(err); 
+  }
 };
 
 // ─── GET /api/professionals/bookings/me ──────────────────────────────────────
@@ -157,6 +173,8 @@ exports.myBookings = async (req, res, next) => {
         obj.professional.id = obj.professional._id;
       }
       obj.id = obj._id;
+      // ✅ Ajoute consultationType pour le frontend (converti depuis sessionType)
+      obj.consultationType = obj.sessionType === 'online' ? 'online' : 'in_person';
       return obj;
     });
 
@@ -202,7 +220,7 @@ exports.confirmBooking = async (req, res, next) => {
           <ul>
             <li><b>Type :</b> ${booking.sessionType === 'online' ? 'En ligne' : 'En personne'}</li>
             <li><b>Disponibilité :</b> ${booking.preferredDate || 'Non précisé'}</li>
-            <li><b>Motif :</b> ${booking.reason || 'Non précisé'}</li>
+            <li><b>Motif :</b> ${booking.message || 'Non précisé'}</li>
             <li>${userInfo}</li>
           </ul>
           <p><small>LinkMind protège ses utilisateurs. Ne demande jamais leurs coordonnées personnelles.</small></p>`,
@@ -280,6 +298,8 @@ exports.allBookings = async (req, res, next) => {
       obj.user = obj.isAnonymous
         ? { displayName: obj.user?.anonymousAlias || '👤 Anonyme', city: obj.user?.city, age: obj.user?.age, id: obj.user?._id }
         : { displayName: `${obj.user?.firstName || ''} ${obj.user?.lastName || ''}`.trim(), city: obj.user?.city, age: obj.user?.age, id: obj.user?._id };
+      // ✅ Ajoute consultationType pour le frontend
+      obj.consultationType = obj.sessionType === 'online' ? 'online' : 'in_person';
       return obj;
     });
 
@@ -288,13 +308,14 @@ exports.allBookings = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-
 // ─── PUT /api/professionals/bookings/:id (modifier une demande en attente) ───
+// ✅ CORRIGÉ : Utilise consultationType et message (frontend)
 exports.updateBooking = async (req, res, next) => {
   try {
     const bookingId = req.params.id;
     const userId = req.user._id;
-    const { sessionType, preferredDate, reason } = req.body;
+    // ✅ Changé: sessionType → consultationType, reason → message
+    const { consultationType, preferredDate, message } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       return res.status(400).json({ error: 'ID de réservation invalide' });
@@ -303,7 +324,7 @@ exports.updateBooking = async (req, res, next) => {
     const booking = await Booking.findOne({ 
       _id: bookingId, 
       user: userId,
-      status: 'pending' // Seulement les demandes en attente
+      status: 'pending'
     }).populate('professional', 'isOnline isInPerson');
 
     if (!booking) {
@@ -312,8 +333,9 @@ exports.updateBooking = async (req, res, next) => {
       });
     }
 
-    // Vérifier si le type de session est toujours disponible
-    if (sessionType) {
+    // Convert consultationType to sessionType
+    if (consultationType) {
+      const sessionType = consultationType === 'online' ? 'online' : 'in_person';
       if (sessionType === 'online' && !booking.professional.isOnline) {
         return res.status(400).json({ error: "Ce professionnel ne propose plus de consultation en ligne" });
       }
@@ -323,11 +345,18 @@ exports.updateBooking = async (req, res, next) => {
       booking.sessionType = sessionType;
     }
 
-    if (preferredDate) booking.preferredDate = preferredDate;
-    if (reason !== undefined) booking.reason = reason; // Permet de vider le champ
+    if (preferredDate !== undefined) booking.preferredDate = preferredDate;
+    if (message !== undefined) booking.message = message;  // ✅ Changé: reason → message
 
     booking.updatedAt = new Date();
     await booking.save();
+
+    console.log('✅ Demande modifiée:', {
+      id: booking._id,
+      sessionType: booking.sessionType,
+      preferredDate: booking.preferredDate,
+      message: booking.message
+    });
 
     res.json({ 
       message: 'Demande modifiée avec succès',
@@ -335,8 +364,9 @@ exports.updateBooking = async (req, res, next) => {
         _id: booking._id,
         status: booking.status,
         sessionType: booking.sessionType,
+        consultationType: booking.sessionType === 'online' ? 'online' : 'in_person',
         preferredDate: booking.preferredDate,
-        reason: booking.reason,
+        message: booking.message,
         updatedAt: booking.updatedAt
       }
     });
@@ -359,7 +389,7 @@ exports.deleteBooking = async (req, res, next) => {
     const booking = await Booking.findOne({ 
       _id: bookingId, 
       user: userId,
-      status: 'pending' // Seulement les demandes en attente
+      status: 'pending'
     });
 
     if (!booking) {
@@ -368,7 +398,6 @@ exports.deleteBooking = async (req, res, next) => {
       });
     }
 
-    // Supprimer définitivement la demande
     await booking.deleteOne();
 
     res.json({ 
