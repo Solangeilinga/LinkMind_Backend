@@ -17,36 +17,40 @@ exports.getFeed = async (req, res, next) => {
     const { page = 1, limit = 20 } = req.query;
     const userId = req.user._id.toString();
 
-    // ✅ CORRECTION : Inclut les posts sans champ isVisible (posts anciens)
     const posts = await Post.find({
       $or: [
         { isVisible: true },
         { isVisible: { $exists: false } }
       ]
     })
-      .populate('author', 'anonymousAlias')
+      .populate('author', '_id anonymousAlias')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
-    // ✅ AJOUT : Log pour déboguer
     console.log(`📊 [FEED] Posts trouvés: ${posts.length}`);
 
     const result = posts.map(post => {
       const obj = post.toObject();
       const alias = post.author?.anonymousAlias || null;
-      obj.authorId       = post.author?._id ? post.author._id.toString() : post.author.toString();
-      obj.isMine         = obj.authorId === userId;
+      
+      // Récupère l'ID de l'auteur
+      let authorId = null;
+      if (post.author) {
+        authorId = post.author._id ? post.author._id.toString() : post.author.toString();
+      }
+      
+      obj.authorId = authorId;
+      obj.isMine = authorId === userId;
       obj.anonymousAlias = alias;
-      obj.author         = { anonymousAlias: alias };
-      obj.isLiked           = post.likes.map(id => id.toString()).includes(userId);
-      obj.likesCount        = post.likes.length;
-      obj.isSameFeeling     = (post.sameFeelings || []).map(id => id.toString()).includes(userId);
+      obj.author = { anonymousAlias: alias };
+      obj.isLiked = (post.likes || []).map(id => id.toString()).includes(userId);
+      obj.likesCount = (post.likes || []).length;
+      obj.isSameFeeling = (post.sameFeelings || []).map(id => id.toString()).includes(userId);
       obj.sameFeelingsCount = (post.sameFeelings || []).length;
       return obj;
     });
 
-    // ✅ CORRECTION : Même condition pour le total
     const total = await Post.countDocuments({
       $or: [
         { isVisible: true },
