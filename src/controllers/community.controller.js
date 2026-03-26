@@ -17,11 +17,20 @@ exports.getFeed = async (req, res, next) => {
     const { page = 1, limit = 20 } = req.query;
     const userId = req.user._id.toString();
 
-    const posts = await Post.find({ isVisible: true })
+    // ✅ CORRECTION : Inclut les posts sans champ isVisible (posts anciens)
+    const posts = await Post.find({
+      $or: [
+        { isVisible: true },
+        { isVisible: { $exists: false } }
+      ]
+    })
       .populate('author', 'anonymousAlias')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
+
+    // ✅ AJOUT : Log pour déboguer
+    console.log(`📊 [FEED] Posts trouvés: ${posts.length}`);
 
     const result = posts.map(post => {
       const obj = post.toObject();
@@ -37,9 +46,19 @@ exports.getFeed = async (req, res, next) => {
       return obj;
     });
 
-    const total = await Post.countDocuments({ isVisible: true });
+    // ✅ CORRECTION : Même condition pour le total
+    const total = await Post.countDocuments({
+      $or: [
+        { isVisible: true },
+        { isVisible: { $exists: false } }
+      ]
+    });
+    
     res.json({ posts: result, total, page: parseInt(page), pages: Math.ceil(total / limit) });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    console.error('❌ [FEED] Erreur:', err);
+    next(err); 
+  }
 };
 
 // ─── My posts ──────────────────────────────────────────────────────────────────
@@ -48,11 +67,21 @@ exports.getMyPosts = async (req, res, next) => {
     const userId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
 
-    const posts = await Post.find({ author: userId, isVisible: true })
+    // ✅ CORRECTION : Inclut les posts sans champ isVisible
+    const posts = await Post.find({
+      author: userId,
+      $or: [
+        { isVisible: true },
+        { isVisible: { $exists: false } }
+      ]
+    })
       .populate('author', 'anonymousAlias')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
+
+    // ✅ AJOUT : Log pour déboguer
+    console.log(`📊 [MY_POSTS] Posts trouvés: ${posts.length}`);
 
     const result = posts.map(post => {
       const obj = post.toObject();
@@ -69,7 +98,10 @@ exports.getMyPosts = async (req, res, next) => {
     });
 
     res.json({ posts: result, total: result.length });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    console.error('❌ [MY_POSTS] Erreur:', err);
+    next(err); 
+  }
 };
 
 // ─── Create post ───────────────────────────────────────────────────────────────
@@ -78,6 +110,11 @@ exports.createPost = async (req, res, next) => {
     const { content, postType, moodRef, challengeRef, moodScore, moodEmoji } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: 'Content is required' });
 
+    // ✅ AJOUT : Log pour déboguer
+    console.log('📝 [CREATE] Création d\'un nouveau post...');
+    console.log('  Content:', content.trim().substring(0, 50));
+    console.log('  User:', req.user._id);
+
     const post = await Post.create({
       author: req.user._id,
       content: content.trim(),
@@ -85,6 +122,7 @@ exports.createPost = async (req, res, next) => {
       moodEmoji: moodEmoji || null,
       moodRef, challengeRef, moodScore,
       isAnonymous: true,
+      isVisible: true, // ✅ Assure que le post est visible
     });
 
     // Populate to get alias
@@ -97,15 +135,23 @@ exports.createPost = async (req, res, next) => {
     obj.likesCount     = 0;
     obj.isMine         = true;
     obj.authorId       = req.user._id.toString();
+    
+    console.log('✅ [CREATE] Post créé avec ID:', post._id);
     res.status(201).json({ post: obj });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    console.error('❌ [CREATE] Erreur:', err);
+    next(err); 
+  }
 };
 
 // ─── Like / unlike a post ──────────────────────────────────────────────────────
 exports.toggleLike = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post?.isVisible) return res.status(404).json({ error: 'Post not found' });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    
+    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
+    if (post.isVisible === false) return res.status(404).json({ error: 'Post not found' });
 
     const userId = req.user._id;
     const idx = post.likes.findIndex(id => id.toString() === userId.toString());
@@ -168,7 +214,10 @@ exports.addComment = async (req, res, next) => {
     if (!content?.trim()) return res.status(400).json({ error: 'Content is required' });
 
     const post = await Post.findById(postId);
-    if (!post?.isVisible) return res.status(404).json({ error: 'Post not found' });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    
+    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
+    if (post.isVisible === false) return res.status(404).json({ error: 'Post not found' });
 
     if (parentCommentId) {
       const parent = await Comment.findById(parentCommentId);
@@ -202,7 +251,10 @@ exports.addComment = async (req, res, next) => {
 exports.toggleCommentLike = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.commentId);
-    if (!comment?.isVisible) return res.status(404).json({ error: 'Comment not found' });
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    
+    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
+    if (comment.isVisible === false) return res.status(404).json({ error: 'Comment not found' });
 
     const userId = req.user._id;
     const idx = comment.likes.findIndex(id => id.toString() === userId.toString());
@@ -268,7 +320,6 @@ exports.joinGroupChallenge = async (req, res, next) => {
     res.json({ message: 'Joined', participantsCount: gc.participantsCount });
   } catch (err) { next(err); }
 };
-
 
 // ─── "Moi aussi" — toggle same feeling ────────────────────────────────────────
 exports.toggleSameFeeling = async (req, res, next) => {
