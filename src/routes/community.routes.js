@@ -9,7 +9,9 @@ router.use(authenticate);
 router.get('/feed',              c.getFeed);
 router.get('/my-posts',          c.getMyPosts);
 router.post('/posts',            c.createPost);
-router.post('/posts/:id/like',   c.toggleLike);
+router.post('/posts/:id/like',        c.toggleLike);
+router.post('/posts/:id/same-feeling',  c.toggleSameFeeling);
+router.delete('/posts/:id',            c.deletePost);
 router.post('/posts/:id/report', c.reportPost);
 
 // Comments

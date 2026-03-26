@@ -9,11 +9,13 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/auth.routes');
 const moodRoutes = require('./routes/mood.routes');
 const challengeRoutes = require('./routes/challenge.routes');
-const communityRoutes = require('./routes/community.routes');
-const userRoutes = require('./routes/user.routes');
-const contentRoutes = require('./routes/content.routes');
-const notificationRoutes = require('./routes/notification.routes');
-const assistantRoutes = require('./routes/assistant.routes');
+const communityRoutes    = require('./routes/community.routes');
+const userRoutes = require('./routes/user.routes');              // ← IMPORTÉ
+const contentRoutes = require('./routes/content.routes');        // ← IMPORTÉ
+const notificationRoutes = require('./routes/notification.routes'); // ← IMPORTÉ
+const assistantRoutes     = require('./routes/assistant.routes');   // ← IMPORTÉ
+const professionalRoutes  = require('./routes/professional.routes');
+const adRoutes            = require('./routes/ad.routes');
 
 const errorHandler = require('./middleware/errorHandler');
 const { scheduleDailyChallenge } = require('./services/scheduler.service');
@@ -63,15 +65,18 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString(), app: 'LinkMind API' });
 });
 
-// API Routes
+// ===== API ROUTES =====
+// Toutes les routes sont maintenant montées correctement
 app.use('/api/auth', authRoutes);
 app.use('/api/mood', moodRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/community', communityRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/content', contentRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/assistant',assistantRoutes)
+app.use('/api/professionals', professionalRoutes);
+app.use('/api/ads', adRoutes);
+app.use('/api/users', userRoutes);                 // ← AJOUTÉ !
+app.use('/api/content', contentRoutes);             // ← AJOUTÉ !
+app.use('/api/notifications', notificationRoutes);  // ← AJOUTÉ !
+app.use('/api/assistant', assistantRoutes);         // ← AJOUTÉ !
 
 // 404 handler
 app.use((req, res) => {
@@ -86,6 +91,17 @@ app.listen(PORT, () => {
   console.log(`\n🧠 LinkMind API running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Health: http://localhost:${PORT}/health\n`);
+  console.log('✅ Routes montées :');
+  console.log('   - /api/auth');
+  console.log('   - /api/mood');
+  console.log('   - /api/challenges');
+  console.log('   - /api/community');
+  console.log('   - /api/professionals');
+  console.log('   - /api/ads');
+  console.log('   - /api/users');                    // ← CONFIRMATION
+  console.log('   - /api/content');
+  console.log('   - /api/notifications');
+  console.log('   - /api/assistant\n');
 });
 
 // Start cron scheduler

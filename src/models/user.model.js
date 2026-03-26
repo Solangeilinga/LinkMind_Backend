@@ -71,6 +71,11 @@ const userSchema = new mongoose.Schema({
 
   // Subscription
   isPremium: { type: Boolean, default: false },
+  isAdmin:   { type: Boolean, default: false },
+
+  // Mindo daily message limit (freemium)
+  mindoMessageCount: { type: Number, default: 0 },
+  mindoLastMessageDate: { type: Date, default: null },
   premiumExpiresAt: { type: Date, default: null },
 
   // Preferences

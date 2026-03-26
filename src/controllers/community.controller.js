@@ -30,8 +30,10 @@ exports.getFeed = async (req, res, next) => {
       obj.isMine         = obj.authorId === userId;
       obj.anonymousAlias = alias;
       obj.author         = { anonymousAlias: alias };
-      obj.isLiked        = post.likes.map(id => id.toString()).includes(userId);
-      obj.likesCount     = post.likes.length;
+      obj.isLiked           = post.likes.map(id => id.toString()).includes(userId);
+      obj.likesCount        = post.likes.length;
+      obj.isSameFeeling     = (post.sameFeelings || []).map(id => id.toString()).includes(userId);
+      obj.sameFeelingsCount = (post.sameFeelings || []).length;
       return obj;
     });
 
@@ -59,8 +61,10 @@ exports.getMyPosts = async (req, res, next) => {
       obj.isMine         = true;
       obj.anonymousAlias = alias;
       obj.author         = { anonymousAlias: alias };
-      obj.isLiked        = post.likes.map(id => id.toString()).includes(userId.toString());
-      obj.likesCount     = post.likes.length;
+      obj.isLiked           = post.likes.map(id => id.toString()).includes(userId.toString());
+      obj.likesCount        = post.likes.length;
+      obj.isSameFeeling     = (post.sameFeelings || []).map(id => id.toString()).includes(userId.toString());
+      obj.sameFeelingsCount = (post.sameFeelings || []).length;
       return obj;
     });
 
@@ -71,13 +75,14 @@ exports.getMyPosts = async (req, res, next) => {
 // ─── Create post ───────────────────────────────────────────────────────────────
 exports.createPost = async (req, res, next) => {
   try {
-    const { content, postType, moodRef, challengeRef, moodScore } = req.body;
+    const { content, postType, moodRef, challengeRef, moodScore, moodEmoji } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: 'Content is required' });
 
     const post = await Post.create({
       author: req.user._id,
       content: content.trim(),
       postType: postType || 'feeling',
+      moodEmoji: moodEmoji || null,
       moodRef, challengeRef, moodScore,
       isAnonymous: true,
     });
@@ -261,5 +266,45 @@ exports.joinGroupChallenge = async (req, res, next) => {
       await gc.save();
     }
     res.json({ message: 'Joined', participantsCount: gc.participantsCount });
+  } catch (err) { next(err); }
+};
+
+
+// ─── "Moi aussi" — toggle same feeling ────────────────────────────────────────
+exports.toggleSameFeeling = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const post   = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post introuvable' });
+
+    const idx = post.sameFeelings.findIndex(id => id.toString() === userId.toString());
+    if (idx === -1) {
+      post.sameFeelings.push(userId);
+    } else {
+      post.sameFeelings.splice(idx, 1);
+    }
+    post.sameFeelingsCount = post.sameFeelings.length;
+    await post.save();
+
+    res.json({
+      sameFeeling:       idx === -1,
+      sameFeelingsCount: post.sameFeelingsCount,
+    });
+  } catch (err) { next(err); }
+};
+
+// ─── Supprimer son propre post ────────────────────────────────────────────────
+exports.deletePost = async (req, res, next) => {
+  try {
+    const userId = req.user._id.toString();
+    const post   = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post introuvable' });
+    if (post.author.toString() !== userId) {
+      return res.status(403).json({ error: 'Tu ne peux supprimer que tes propres posts' });
+    }
+    // Suppression douce — le post reste en base mais invisible
+    post.isVisible = false;
+    await post.save();
+    res.json({ message: 'Post supprimé', deleted: true });
   } catch (err) { next(err); }
 };

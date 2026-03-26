@@ -56,4 +56,15 @@ const requirePremium = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, optionalAuth, requirePremium };
+// Admin guard
+const requireAdmin = (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({
+      error: 'Admin access required',
+      code: 'ADMIN_REQUIRED',
+    });
+  }
+  next();
+};
+
+module.exports = { authenticate, optionalAuth, requirePremium, requireAdmin };
