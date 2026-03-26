@@ -34,7 +34,6 @@ exports.getFeed = async (req, res, next) => {
       const obj = post.toObject();
       const alias = post.author?.anonymousAlias || null;
       
-      // Récupère l'ID de l'auteur
       let authorId = null;
       if (post.author) {
         authorId = post.author._id ? post.author._id.toString() : post.author.toString();
@@ -71,7 +70,6 @@ exports.getMyPosts = async (req, res, next) => {
     const userId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
 
-    // ✅ CORRECTION : Inclut les posts sans champ isVisible
     const posts = await Post.find({
       author: userId,
       $or: [
@@ -84,7 +82,6 @@ exports.getMyPosts = async (req, res, next) => {
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
-    // ✅ AJOUT : Log pour déboguer
     console.log(`📊 [MY_POSTS] Posts trouvés: ${posts.length}`);
 
     const result = posts.map(post => {
@@ -114,7 +111,6 @@ exports.createPost = async (req, res, next) => {
     const { content, postType, moodRef, challengeRef, moodScore, moodEmoji } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: 'Content is required' });
 
-    // ✅ AJOUT : Log pour déboguer
     console.log('📝 [CREATE] Création d\'un nouveau post...');
     console.log('  Content:', content.trim().substring(0, 50));
     console.log('  User:', req.user._id);
@@ -126,10 +122,9 @@ exports.createPost = async (req, res, next) => {
       moodEmoji: moodEmoji || null,
       moodRef, challengeRef, moodScore,
       isAnonymous: true,
-      isVisible: true, // ✅ Assure que le post est visible
+      isVisible: true,
     });
 
-    // Populate to get alias
     await post.populate('author', 'anonymousAlias');
     const obj = post.toObject();
     const alias = post.author?.anonymousAlias || null;
@@ -153,8 +148,6 @@ exports.toggleLike = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
-    
-    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
     if (post.isVisible === false) return res.status(404).json({ error: 'Post not found' });
 
     const userId = req.user._id;
@@ -168,7 +161,7 @@ exports.toggleLike = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ─── Get comments (threaded, Facebook style) ──────────────────────────────────
+// ─── Get comments ──────────────────────────────────────────────────────────────
 exports.getComments = async (req, res, next) => {
   try {
     const { id: postId } = req.params;
@@ -184,7 +177,6 @@ exports.getComments = async (req, res, next) => {
       .populate('author', 'anonymousAlias')
       .sort({ createdAt: 1 });
 
-    // Build tree: top-level + replies
     const map = {};
     const topLevel = [];
 
@@ -219,8 +211,6 @@ exports.addComment = async (req, res, next) => {
 
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ error: 'Post not found' });
-    
-    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
     if (post.isVisible === false) return res.status(404).json({ error: 'Post not found' });
 
     if (parentCommentId) {
@@ -243,7 +233,6 @@ exports.addComment = async (req, res, next) => {
       await Post.findByIdAndUpdate(postId, { $inc: { commentsCount: 1 } });
     }
 
-    // Populate author for alias
     await comment.populate('author', 'anonymousAlias');
     const obj = serializeComment(comment, req.user._id.toString());
     obj.replies = [];
@@ -256,8 +245,6 @@ exports.toggleCommentLike = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.commentId);
     if (!comment) return res.status(404).json({ error: 'Comment not found' });
-    
-    // ✅ CORRECTION : Vérifie isVisible ou absence du champ
     if (comment.isVisible === false) return res.status(404).json({ error: 'Comment not found' });
 
     const userId = req.user._id;
@@ -280,13 +267,96 @@ exports.reportPost = async (req, res, next) => {
     const already = post.reports?.some(r => r.user?.toString() === req.user._id.toString());
     if (already) return res.status(409).json({ error: 'Already reported' });
 
-    post.reports.push({ user: req.user._id, reason: req.body.reason, reportedAt: new Date() });
+    post.reports = post.reports || [];
+    post.reports.push({ 
+      user: req.user._id, 
+      reason: req.body.reason, 
+      details: req.body.details || null,
+      reportedAt: new Date() 
+    });
     post.reportCount = (post.reportCount || 0) + 1;
     if (post.reportCount >= 5) post.isVisible = false;
     await post.save();
 
-    res.json({ message: 'Signalement pris en compte.' });
-  } catch (err) { next(err); }
+    res.json({ 
+      message: 'Signalement pris en compte.', 
+      autoHidden: post.reportCount >= 5 
+    });
+  } catch (err) { 
+    console.error('❌ Report post error:', err);
+    next(err); 
+  }
+};
+
+// ─── Report comment ────────────────────────────────────────────────────────────
+exports.reportComment = async (req, res, next) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+
+    const already = comment.reports?.some(r => r.user?.toString() === req.user._id.toString());
+    if (already) return res.status(409).json({ error: 'Already reported' });
+
+    comment.reports = comment.reports || [];
+    comment.reports.push({ 
+      user: req.user._id, 
+      reason: req.body.reason, 
+      details: req.body.details || null,
+      reportedAt: new Date() 
+    });
+    comment.reportCount = (comment.reportCount || 0) + 1;
+    
+    let autoHidden = false;
+    if (comment.reportCount >= 3) {
+      comment.isVisible = false;
+      autoHidden = true;
+    }
+    await comment.save();
+
+    res.json({ 
+      message: 'Signalement pris en compte.', 
+      autoHidden: autoHidden 
+    });
+  } catch (err) { 
+    console.error('❌ Report comment error:', err);
+    next(err); 
+  }
+};
+
+// ─── Report professional ───────────────────────────────────────────────────────
+exports.reportProfessional = async (req, res, next) => {
+  try {
+    const Professional = require('../models/professional.model');
+    const professional = await Professional.findById(req.params.id);
+    if (!professional) return res.status(404).json({ error: 'Professional not found' });
+
+    const already = professional.reports?.some(r => r.user?.toString() === req.user._id.toString());
+    if (already) return res.status(409).json({ error: 'Already reported' });
+
+    professional.reports = professional.reports || [];
+    professional.reports.push({ 
+      user: req.user._id, 
+      reason: req.body.reason, 
+      details: req.body.details || null,
+      reportedAt: new Date() 
+    });
+    professional.reportCount = (professional.reportCount || 0) + 1;
+    
+    let suspended = false;
+    if (professional.reportCount >= 10) {
+      professional.isActive = false;
+      suspended = true;
+    }
+    await professional.save();
+
+    res.json({ 
+      message: 'Signalement pris en compte.', 
+      suspended: suspended 
+    });
+  } catch (err) { 
+    console.error('❌ Report professional error:', err);
+    next(err); 
+  }
 };
 
 // ─── Group challenges ──────────────────────────────────────────────────────────
@@ -357,7 +427,6 @@ exports.deletePost = async (req, res, next) => {
     if (post.author.toString() !== userId) {
       return res.status(403).json({ error: 'Tu ne peux supprimer que tes propres posts' });
     }
-    // Suppression douce — le post reste en base mais invisible
     post.isVisible = false;
     await post.save();
     res.json({ message: 'Post supprimé', deleted: true });

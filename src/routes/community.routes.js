@@ -1,20 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const c = require('../controllers/community.controller');
-const moderation = require('../controllers/moderation.controller');
 const { authenticate, requireAdmin } = require('../middleware/auth.middleware');
 
 router.use(authenticate);
 
 // Routes de signalement (accessibles à tous)
 router.post('/posts/:id/report', c.reportPost);
-router.post('/comments/:id/report', moderation.reportComment);
-router.post('/professionals/:id/report', moderation.reportProfessional);
-
-// Routes admin pour la modération
-router.get('/admin/reports', requireAdmin, moderation.getReportedContent);
-router.post('/admin/reports/:targetType/:targetId/:reportId', requireAdmin, moderation.resolveReport);
-router.get('/admin/logs', requireAdmin, moderation.getModerationLog);
+router.post('/comments/:id/report', c.reportComment);
+router.post('/professionals/:id/report', c.reportProfessional);
 
 // Routes existantes...
 router.get('/feed', c.getFeed);
