@@ -10,15 +10,18 @@ const authRoutes = require('./routes/auth.routes');
 const moodRoutes = require('./routes/mood.routes');
 const challengeRoutes = require('./routes/challenge.routes');
 const communityRoutes    = require('./routes/community.routes');
-const userRoutes = require('./routes/user.routes');              // ← IMPORTÉ
-const contentRoutes = require('./routes/content.routes');        // ← IMPORTÉ
-const notificationRoutes = require('./routes/notification.routes'); // ← IMPORTÉ
-const assistantRoutes     = require('./routes/assistant.routes');   // ← IMPORTÉ
+const userRoutes = require('./routes/user.routes');
+const contentRoutes = require('./routes/content.routes');
+const notificationRoutes = require('./routes/notification.routes');
+const assistantRoutes     = require('./routes/assistant.routes');
 const professionalRoutes  = require('./routes/professional.routes');
 const adRoutes            = require('./routes/ad.routes');
 
 const errorHandler = require('./middleware/errorHandler');
 const { scheduleDailyChallenge } = require('./services/scheduler.service');
+const { authenticate } = require('./middleware/auth.middleware');
+const { checkSessionTimeout } = require('./middleware/session.middleware');
+const { applyRateLimit } = require('./middleware/rate-limit.middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,18 +30,32 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
+
+// CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
-// Rate limiting
+// Rate limiting global
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -47,9 +64,20 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: 'Too many login attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+
+// API rate limit pour les actions sensibles
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  message: { error: 'Too many requests, slow down.' },
+});
+app.use('/api/community/posts', apiLimiter);
+app.use('/api/community/comments', apiLimiter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -66,17 +94,34 @@ app.get('/health', (req, res) => {
 });
 
 // ===== API ROUTES =====
-// Toutes les routes sont maintenant montées correctement
+// Routes publiques (sans authentification)
 app.use('/api/auth', authRoutes);
+
+// Routes protégées (avec authentification)
+app.use('/api/mood', authenticate);
+app.use('/api/challenges', authenticate);
+app.use('/api/community', authenticate);
+app.use('/api/professionals', authenticate);
+app.use('/api/ads', authenticate);
+app.use('/api/users', authenticate);
+app.use('/api/content', authenticate);
+app.use('/api/notifications', authenticate);
+app.use('/api/assistant', authenticate);
+
+// Appliquer les middlewares de sécurité après authentification
+app.use(checkSessionTimeout);
+app.use(applyRateLimit);
+
+// Monter les routes protégées
 app.use('/api/mood', moodRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/professionals', professionalRoutes);
 app.use('/api/ads', adRoutes);
-app.use('/api/users', userRoutes);                 // ← AJOUTÉ !
-app.use('/api/content', contentRoutes);             // ← AJOUTÉ !
-app.use('/api/notifications', notificationRoutes);  // ← AJOUTÉ !
-app.use('/api/assistant', assistantRoutes);         // ← AJOUTÉ !
+app.use('/api/users', userRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -92,16 +137,21 @@ app.listen(PORT, () => {
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Health: http://localhost:${PORT}/health\n`);
   console.log('✅ Routes montées :');
-  console.log('   - /api/auth');
+  console.log('   - /api/auth (public)');
   console.log('   - /api/mood');
   console.log('   - /api/challenges');
   console.log('   - /api/community');
   console.log('   - /api/professionals');
   console.log('   - /api/ads');
-  console.log('   - /api/users');                    // ← CONFIRMATION
+  console.log('   - /api/users');
   console.log('   - /api/content');
   console.log('   - /api/notifications');
   console.log('   - /api/assistant\n');
+  console.log('🔒 Sécurité activée :');
+  console.log('   - Session timeout (60 min)');
+  console.log('   - Rate limiting (100 requêtes/15min)');
+  console.log('   - Brute force protection');
+  console.log('   - Détection comportements suspects\n');
 });
 
 // Start cron scheduler

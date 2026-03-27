@@ -49,31 +49,25 @@ exports.register = async (req, res, next) => {
     const { firstName, lastName, email, phone, age, city, gender,
             password, anonymousAlias } = req.body;
 
-    // Build full name
     const name = `${firstName || ''} ${lastName || ''}`.trim() || null;
 
-    // Normaliser le numéro
     if (phone) req.body.phone = normalizePhone(phone);
     const phoneNorm = req.body.phone;
 
-    // Require at least phone or email
     if (!phone && !email) {
       return res.status(400).json({ error: 'Un email ou un numéro de téléphone est requis.' });
     }
 
-    // Check email uniqueness if provided
     if (email) {
       const existingEmail = await User.findOne({ email });
       if (existingEmail) return res.status(409).json({ error: 'Cet email est déjà utilisé.' });
     }
 
-    // Check phone uniqueness if provided
     if (phone) {
       const existingPhone = await User.findOne({ phone });
       if (existingPhone) return res.status(409).json({ error: 'Ce numéro est déjà utilisé.' });
     }
 
-    // Vérifier unicité du pseudo anonyme
     if (anonymousAlias && anonymousAlias.trim()) {
       const existingAlias = await User.findOne({ anonymousAlias: anonymousAlias.trim() });
       if (existingAlias) {
@@ -92,11 +86,17 @@ exports.register = async (req, res, next) => {
       gender:    gender         || null,
       password,
       anonymousAlias: anonymousAlias?.trim() || null,
+      // Sécurité
+      lastActivity: new Date(),
     });
 
     const { accessToken, refreshToken } = generateTokens(user._id);
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+
+    // Enregistrer l'activité de création de compte
+    user.recordActivity('login', { type: 'register' }, req.ip, req.headers['user-agent']);
+    await user.save();
 
     res.status(201).json({
       message: 'Registration successful',
@@ -109,7 +109,7 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/login
+// POST /api/auth/login - AVEC DÉTECTION BRUTE FORCE
 exports.login = async (req, res, next) => {
   try {
     const { email, phone, password } = req.body;
@@ -119,8 +119,33 @@ exports.login = async (req, res, next) => {
     }
 
     const query = email ? { email: email.toLowerCase() } : { phone: normalizePhone(phone) };
-    const user = await User.findOne(query).select('+password +refreshToken');
+    const user = await User.findOne(query).select('+password +refreshToken +loginAttempts +isLocked +lockedUntil');
+
+    // Vérifier si le compte est verrouillé
+    if (user && user.isAccountLocked()) {
+      const remainingMinutes = user.lockedUntil ? Math.ceil((user.lockedUntil - new Date()) / 60000) : 15;
+      return res.status(429).json({
+        error: 'Compte temporairement verrouillé',
+        message: `Trop de tentatives. Réessayez dans ${remainingMinutes} minutes`,
+        remainingMinutes,
+        code: 'ACCOUNT_LOCKED'
+      });
+    }
+
     if (!user || !(await user.comparePassword(password))) {
+      // Enregistrer la tentative échouée
+      if (user) {
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        user.lastLoginAttempt = new Date();
+        
+        // Verrouiller après 5 tentatives
+        if (user.loginAttempts >= 5) {
+          user.isLocked = true;
+          user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+          console.log(`🔒 Compte verrouillé: ${user.email} - ${user.loginAttempts} tentatives`);
+        }
+        await user.save({ validateBeforeSave: false });
+      }
       return res.status(401).json({ error: 'Identifiants invalides' });
     }
 
@@ -128,10 +153,20 @@ exports.login = async (req, res, next) => {
       return res.status(403).json({ error: 'Account deactivated' });
     }
 
+    // Réinitialiser les tentatives après connexion réussie
+    user.loginAttempts = 0;
+    user.isLocked = false;
+    user.lockedUntil = null;
+    user.lastActivity = new Date();
+
     const { accessToken, refreshToken } = generateTokens(user._id);
     user.refreshToken = refreshToken;
     user.updateStreak();
     await user.save({ validateBeforeSave: false });
+
+    // Enregistrer l'activité de connexion
+    user.recordActivity('login', { success: true }, req.ip, req.headers['user-agent']);
+    await user.save();
 
     res.json({
       message: 'Login successful',
@@ -161,6 +196,7 @@ exports.refreshToken = async (req, res, next) => {
 
     const tokens = generateTokens(user._id);
     user.refreshToken = tokens.refreshToken;
+    user.lastActivity = new Date(); // Mettre à jour l'activité
     await user.save({ validateBeforeSave: false });
 
     res.json(tokens);
@@ -212,12 +248,8 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
 // ─── Helper: envoyer l'OTP (email ou SMS) ─────────────────────────────────────
 const sendOtp = async (channel, destination, otp) => {
   if (channel === 'email') {
-    // TODO: brancher nodemailer / SendGrid
-    // await transporter.sendMail({ to: destination, subject: 'Ton code LinkMind', text: `Code: ${otp}` });
     console.log(`[OTP EMAIL] → ${destination} : ${otp}`);
   } else {
-    // TODO: brancher Africa's Talking / Twilio
-    // await smsClient.messages.create({ to: destination, body: `Ton code LinkMind: ${otp}` });
     console.log(`[OTP SMS] → ${destination} : ${otp}`);
   }
 };
@@ -231,12 +263,10 @@ exports.forgotPassword = async (req, res, next) => {
     const { identifier } = req.body;
     const isEmail = identifier.includes('@');
 
-    // Chercher l'utilisateur par email ou téléphone
     const query = isEmail ? { email: identifier.toLowerCase() } : { phone: identifier };
     const user = await User.findOne(query).select('+otp +otpExpires +otpChannel');
     if (!user) return res.status(404).json({ error: 'Aucun compte trouvé avec cet identifiant.' });
 
-    // Générer OTP valable 15 minutes
     const otp = generateOtp();
     user.otp        = otp;
     user.otpExpires = new Date(Date.now() + 15 * 60 * 1000);
@@ -248,7 +278,6 @@ exports.forgotPassword = async (req, res, next) => {
     res.json({
       message: `Code envoyé par ${isEmail ? 'email' : 'SMS'}.`,
       channel: user.otpChannel,
-      // En dev uniquement — retirer en production
       ...(process.env.NODE_ENV !== 'production' && { otp }),
     });
   } catch (err) { next(err); }

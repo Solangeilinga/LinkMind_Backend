@@ -1,4 +1,6 @@
 const { Post, Comment, GroupChallenge } = require('../models/community.model');
+const User = require('../models/user.model');
+const SuspiciousActivityService = require('../services/suspicious.service');
 
 // Helper: serialize a comment — author must already be populated
 const serializeComment = (comment, userId) => {
@@ -136,6 +138,16 @@ exports.createPost = async (req, res, next) => {
     obj.authorId       = req.user._id.toString();
     
     console.log('✅ [CREATE] Post créé avec ID:', post._id);
+    
+    // 🔒 Sécurité: Enregistrer l'activité de création de post
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'post',
+      { postId: post._id, postType: post.postType },
+      req.ip,
+      req.headers['user-agent']
+    );
+    
     res.status(201).json({ post: obj });
   } catch (err) { 
     console.error('❌ [CREATE] Erreur:', err);
@@ -152,12 +164,23 @@ exports.toggleLike = async (req, res, next) => {
 
     const userId = req.user._id;
     const idx = post.likes.findIndex(id => id.toString() === userId.toString());
-    if (idx === -1) post.likes.push(userId);
+    const wasLiked = idx === -1;
+    
+    if (wasLiked) post.likes.push(userId);
     else post.likes.splice(idx, 1);
     post.likesCount = post.likes.length;
     await post.save();
 
-    res.json({ liked: idx === -1, likesCount: post.likes.length });
+    // 🔒 Sécurité: Enregistrer l'activité de like
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'like',
+      { postId: req.params.id, liked: wasLiked },
+      req.ip,
+      req.headers['user-agent']
+    );
+
+    res.json({ liked: wasLiked, likesCount: post.likes.length });
   } catch (err) { next(err); }
 };
 
@@ -236,6 +259,16 @@ exports.addComment = async (req, res, next) => {
     await comment.populate('author', 'anonymousAlias');
     const obj = serializeComment(comment, req.user._id.toString());
     obj.replies = [];
+    
+    // 🔒 Sécurité: Enregistrer l'activité de commentaire
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'comment',
+      { postId, commentId: comment._id, parentCommentId },
+      req.ip,
+      req.headers['user-agent']
+    );
+    
     res.status(201).json({ comment: obj });
   } catch (err) { next(err); }
 };
@@ -249,12 +282,14 @@ exports.toggleCommentLike = async (req, res, next) => {
 
     const userId = req.user._id;
     const idx = comment.likes.findIndex(id => id.toString() === userId.toString());
-    if (idx === -1) comment.likes.push(userId);
+    const wasLiked = idx === -1;
+    
+    if (wasLiked) comment.likes.push(userId);
     else comment.likes.splice(idx, 1);
     comment.likesCount = comment.likes.length;
     await comment.save();
 
-    res.json({ liked: idx === -1, likesCount: comment.likes.length });
+    res.json({ liked: wasLiked, likesCount: comment.likes.length });
   } catch (err) { next(err); }
 };
 
@@ -275,12 +310,26 @@ exports.reportPost = async (req, res, next) => {
       reportedAt: new Date() 
     });
     post.reportCount = (post.reportCount || 0) + 1;
-    if (post.reportCount >= 5) post.isVisible = false;
+    
+    let autoHidden = false;
+    if (post.reportCount >= 5) {
+      post.isVisible = false;
+      autoHidden = true;
+    }
     await post.save();
+
+    // 🔒 Sécurité: Enregistrer l'activité de signalement
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'report',
+      { targetType: 'post', targetId: req.params.id, reason: req.body.reason },
+      req.ip,
+      req.headers['user-agent']
+    );
 
     res.json({ 
       message: 'Signalement pris en compte.', 
-      autoHidden: post.reportCount >= 5 
+      autoHidden: autoHidden 
     });
   } catch (err) { 
     console.error('❌ Report post error:', err);
@@ -312,6 +361,15 @@ exports.reportComment = async (req, res, next) => {
       autoHidden = true;
     }
     await comment.save();
+
+    // 🔒 Sécurité: Enregistrer l'activité de signalement
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'report',
+      { targetType: 'comment', targetId: req.params.id, reason: req.body.reason },
+      req.ip,
+      req.headers['user-agent']
+    );
 
     res.json({ 
       message: 'Signalement pris en compte.', 
@@ -348,6 +406,15 @@ exports.reportProfessional = async (req, res, next) => {
       suspended = true;
     }
     await professional.save();
+
+    // 🔒 Sécurité: Enregistrer l'activité de signalement
+    await SuspiciousActivityService.recordActivity(
+      req.user._id,
+      'report',
+      { targetType: 'professional', targetId: req.params.id, reason: req.body.reason },
+      req.ip,
+      req.headers['user-agent']
+    );
 
     res.json({ 
       message: 'Signalement pris en compte.', 
@@ -403,7 +470,9 @@ exports.toggleSameFeeling = async (req, res, next) => {
     if (!post) return res.status(404).json({ error: 'Post introuvable' });
 
     const idx = post.sameFeelings.findIndex(id => id.toString() === userId.toString());
-    if (idx === -1) {
+    const wasAdded = idx === -1;
+    
+    if (wasAdded) {
       post.sameFeelings.push(userId);
     } else {
       post.sameFeelings.splice(idx, 1);
@@ -412,7 +481,7 @@ exports.toggleSameFeeling = async (req, res, next) => {
     await post.save();
 
     res.json({
-      sameFeeling:       idx === -1,
+      sameFeeling:       wasAdded,
       sameFeelingsCount: post.sameFeelingsCount,
     });
   } catch (err) { next(err); }
@@ -427,8 +496,11 @@ exports.deletePost = async (req, res, next) => {
     if (post.author.toString() !== userId) {
       return res.status(403).json({ error: 'Tu ne peux supprimer que tes propres posts' });
     }
+    
+    // Suppression douce — le post reste en base mais invisible
     post.isVisible = false;
     await post.save();
+    
     res.json({ message: 'Post supprimé', deleted: true });
   } catch (err) { next(err); }
 };

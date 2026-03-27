@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     unique: true,
-    sparse: true, // allows multiple nulls with unique index
+    sparse: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema({
     maxlength: 30,
     sparse: true,
   },
-  // Personal info
   firstName:  { type: String, default: null, trim: true, maxlength: 50 },
   lastName:   { type: String, default: null, trim: true, maxlength: 50 },
   phone: {
@@ -51,7 +50,6 @@ const userSchema = new mongoose.Schema({
   age:        { type: Number, default: null, min: 10, max: 120 },
   city:       { type: String, default: null, trim: true, maxlength: 100 },
   gender:     { type: String, enum: ['homme', 'femme', 'autre', 'non_specifie', null], default: null },
-  // Academic context
 
   // App stats
   totalPoints: { type: Number, default: 0 },
@@ -81,19 +79,59 @@ const userSchema = new mongoose.Schema({
   // Preferences
   preferences: {
     notificationsEnabled: { type: Boolean, default: true },
-    reminderTime: { type: String, default: '20:00' }, // HH:mm
+    reminderTime: { type: String, default: '20:00' },
     anonymousInCommunity: { type: Boolean, default: false },
     theme: { type: String, enum: ['light', 'dark', 'auto'], default: 'auto' },
   },
 
   // Auth
   refreshToken: { type: String, select: false },
-  // OTP pour récupération de compte
   otp:          { type: String, select: false, default: null },
   otpExpires:   { type: Date,   select: false, default: null },
-  otpChannel:   { type: String, select: false, default: null }, // 'email' | 'sms'
+  otpChannel:   { type: String, select: false, default: null },
   isActive: { type: Boolean, default: true },
   isEmailVerified: { type: Boolean, default: false },
+
+  // ========== NOUVEAUX CHAMPS DE SÉCURITÉ ==========
+  
+  // Session timeout
+  lastActivity: { type: Date, default: Date.now },
+  sessionId: { type: String, default: null },
+  maxConcurrentSessions: { type: Number, default: 3 },
+  
+  // Brute force protection
+  loginAttempts: { type: Number, default: 0 },
+  lastLoginAttempt: { type: Date, default: null },
+  isLocked: { type: Boolean, default: false },
+  lockedUntil: { type: Date, default: null },
+  accountStatus: { type: String, enum: ['active', 'locked', 'suspended'], default: 'active' },
+  
+  // Détection de comportements suspects
+  activityLog: [{
+    type: { type: String, enum: ['login', 'post', 'comment', 'report', 'like'] },
+    timestamp: { type: Date, default: Date.now },
+    metadata: { type: mongoose.Schema.Types.Mixed },
+    ip: String,
+    userAgent: String
+  }],
+  
+  suspicionScore: { type: Number, default: 0 },
+  restricted: { type: Boolean, default: false },
+  restrictionReason: String,
+  restrictedUntil: Date,
+  
+  flags: [{
+    type: { type: String, enum: ['suspicious_activity', 'spam', 'harassment'] },
+    score: Number,
+    timestamp: Date,
+    resolved: { type: Boolean, default: false },
+    resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  }],
+  
+  // Chiffrement des messages (clés pour E2EE)
+  publicKey: { type: String, default: null, select: false },
+  privateKey: { type: String, default: null, select: false },
+  encryptionEnabled: { type: Boolean, default: false },
 
 }, { timestamps: true });
 
@@ -129,11 +167,70 @@ userSchema.methods.updateStreak = function () {
     last.setHours(0, 0, 0, 0);
     const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return; // same day
+    if (diffDays === 0) return;
     if (diffDays === 1) this.streakDays += 1;
-    else this.streakDays = 1; // streak broken
+    else this.streakDays = 1;
   }
   this.lastActivityDate = new Date();
+};
+
+// ========== NOUVELLES MÉTHODES DE SÉCURITÉ ==========
+
+// Vérifier si la session est active
+userSchema.methods.isSessionActive = function () {
+  const timeout = 60 * 60 * 1000; // 60 minutes
+  const lastActivity = this.lastActivity || this.createdAt;
+  const inactiveTime = Date.now() - new Date(lastActivity).getTime();
+  return inactiveTime < timeout;
+};
+
+// Vérifier si le compte est verrouillé
+userSchema.methods.isAccountLocked = function () {
+  if (!this.isLocked) return false;
+  if (this.lockedUntil && this.lockedUntil < new Date()) {
+    // Le verrouillage a expiré
+    this.isLocked = false;
+    this.loginAttempts = 0;
+    this.lockedUntil = null;
+    return false;
+  }
+  return true;
+};
+
+// Enregistrer une activité suspecte
+userSchema.methods.addSuspiciousFlag = function (type, score, metadata = {}) {
+  this.flags = this.flags || [];
+  this.flags.push({
+    type: type,
+    score: score,
+    timestamp: new Date(),
+    metadata: metadata
+  });
+  this.suspicionScore = (this.suspicionScore || 0) + score;
+  
+  // Si score > 70, restreindre le compte
+  if (this.suspicionScore > 70 && !this.restricted) {
+    this.restricted = true;
+    this.restrictionReason = 'Activité suspecte détectée';
+    this.restrictedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+  }
+};
+
+// Enregistrer une activité
+userSchema.methods.recordActivity = function (type, metadata = {}, ip, userAgent) {
+  this.activityLog = this.activityLog || [];
+  this.activityLog.push({
+    type,
+    timestamp: new Date(),
+    metadata,
+    ip,
+    userAgent
+  });
+  
+  // Garder seulement les 100 dernières activités
+  if (this.activityLog.length > 100) {
+    this.activityLog = this.activityLog.slice(-100);
+  }
 };
 
 // Remove sensitive fields from JSON output
@@ -141,6 +238,11 @@ userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
   delete obj.refreshToken;
+  delete obj.otp;
+  delete obj.otpExpires;
+  delete obj.publicKey;
+  delete obj.privateKey;
+  delete obj.activityLog;
   return obj;
 };
 
