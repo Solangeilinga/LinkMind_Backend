@@ -27,6 +27,11 @@ const moodLabel = (score) => {
 
 // ─── Générateur principal ─────────────────────────────────────────────────────
 const generateReport = async (user, moodHistory, challenges, badges) => {
+  // Calcul avgScore avant toute utilisation
+  const avgScore = (moodHistory?.length)
+    ? moodHistory.reduce((s, e) => s + (e.score || 3), 0) / moodHistory.length
+    : 3;
+
   // Fetch conseil from DB before starting PDF stream
   const range = avgScore >= 4 ? 'high' : avgScore >= 3 ? 'medium' : 'low';
   const template = await ReportTemplate.findOne({ moodRange: range, isActive: true }).catch(() => null);
@@ -168,11 +173,10 @@ const generateReport = async (user, moodHistory, challenges, badges) => {
       });
       y += 20;
 
-      // Calcul moyenne
-      const avg = (moodHistory.reduce((s, e) => s + (e.score || 3), 0) / moodHistory.length).toFixed(1);
+      // Calcul moyenne (avgScore déjà calculé en haut)
       fillColor(COLORS.dark);
       doc.fontSize(11).font('Helvetica-Bold')
-         .text(`Humeur moyenne : ${avg}/5 — ${moodLabel(Math.round(avg))}`, 50, y + 6);
+         .text(`Humeur moyenne : ${avgScore.toFixed(1)}/5 — ${moodLabel(Math.round(avgScore))}`, 50, y + 6);
       y += 26;
     }
 

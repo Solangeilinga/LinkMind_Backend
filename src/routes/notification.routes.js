@@ -1,16 +1,15 @@
-// notification.routes.js
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth.middleware');
+const c = require('../controllers/notification.controller');
 
 router.use(authenticate);
 
-router.get('/', (req, res) => {
-  res.json({ notifications: [], unreadCount: 0 });
-});
-
-router.patch('/:id/read', (req, res) => {
-  res.json({ message: 'Marked as read' });
-});
+router.get('/',                    c.getNotifications);
+router.patch('/read-all',          c.markAllRead);
+router.patch('/:id/read',          c.markRead);
+router.delete('/',                 c.clearAll);
+router.delete('/:id',              c.deleteOne);
+router.post('/fcm-token',          c.registerFcmToken);
 
 module.exports = router;

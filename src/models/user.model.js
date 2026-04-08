@@ -92,6 +92,11 @@ const userSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   isEmailVerified: { type: Boolean, default: false },
 
+  // Acceptation légale
+  legalAccepted:    { type: Boolean, default: false },
+  legalAcceptedAt:  { type: Date,    default: null },
+  legalVersion:     { type: String,  default: null }, // version des CGU acceptées
+
   // ========== NOUVEAUX CHAMPS DE SÉCURITÉ ==========
   
   // Session timeout

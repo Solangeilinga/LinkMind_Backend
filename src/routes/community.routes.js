@@ -16,6 +16,8 @@ router.get('/my-posts', c.getMyPosts);
 router.post('/posts', c.createPost);
 router.post('/posts/:id/like', c.toggleLike);
 router.post('/posts/:id/same-feeling', c.toggleSameFeeling);
+router.post('/posts/:id/react',         c.toggleReaction);
+router.get('/search',                   c.searchPosts);
 router.delete('/posts/:id', c.deletePost);
 router.get('/posts/:id/comments', c.getComments);
 router.post('/posts/:id/comments', c.addComment);

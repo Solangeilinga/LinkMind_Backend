@@ -22,6 +22,7 @@ const { scheduleDailyChallenge } = require('./services/scheduler.service');
 const { authenticate } = require('./middleware/auth.middleware');
 const { checkSessionTimeout } = require('./middleware/session.middleware');
 const { applyRateLimit } = require('./middleware/rate-limit.middleware');
+const { requireLegalAccepted } = require('./middleware/legal.middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -111,6 +112,7 @@ app.use('/api/assistant', authenticate);
 // Appliquer les middlewares de sécurité après authentification
 app.use(checkSessionTimeout);
 app.use(applyRateLimit);
+app.use(requireLegalAccepted);
 
 // Monter les routes protégées
 app.use('/api/mood', moodRoutes);

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/user.model');
 const { AppError } = require('../middleware/errorHandler');
+const { checkAndAwardBadges } = require('../services/badge.service'); // ✅ Ajout
 
 // Normalise un numéro : supprime espaces, tirets, points
 const normalizePhone = (p) => p ? p.replace(/[\s\-\.]/g, '') : p;
@@ -109,7 +110,7 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/login - AVEC DÉTECTION BRUTE FORCE
+// POST /api/auth/login - AVEC DÉTECTION BRUTE FORCE ET VÉRIFICATION BADGES
 exports.login = async (req, res, next) => {
   try {
     const { email, phone, password } = req.body;
@@ -168,11 +169,25 @@ exports.login = async (req, res, next) => {
     user.recordActivity('login', { success: true }, req.ip, req.headers['user-agent']);
     await user.save();
 
+    // ✅ Vérifier les badges après connexion (pour streak_days, points, etc.)
+    let newBadges = [];
+    try {
+      // Recharger l'utilisateur avec les données à jour
+      const updatedUser = await User.findById(user._id);
+      newBadges = await checkAndAwardBadges(updatedUser);
+      if (newBadges.length > 0) {
+        console.log(`🎉 Nouveaux badges pour ${user.email}: ${newBadges.map(b => b.name).join(', ')}`);
+      }
+    } catch (badgeError) {
+      console.error('Error checking badges after login:', badgeError);
+    }
+
     res.json({
       message: 'Login successful',
       accessToken,
       refreshToken,
       user: serializeUser(user),
+      newBadges, // ✅ Ajout des nouveaux badges débloqués
     });
   } catch (error) {
     next(error);

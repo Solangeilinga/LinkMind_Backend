@@ -1,6 +1,7 @@
 const Mood = require('../models/mood.model');
 const User = require('../models/user.model');
 const { getPersonalizedRecommendations } = require('../services/recommendation.service');
+const { checkAndAwardBadges } = require('../services/badge.service'); // ✅ Ajout
 
 // POST /api/mood
 exports.logMood = async (req, res, next) => {
@@ -21,6 +22,8 @@ exports.logMood = async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
+    let newBadges = [];
+
     // Award points only on first log of the day
     const isNew = mood.createdAt.toISOString() === mood.updatedAt.toISOString();
     if (isNew) {
@@ -28,6 +31,11 @@ exports.logMood = async (req, res, next) => {
       req.user.updateStreak();
       req.user.updateLevel();
       await req.user.save({ validateBeforeSave: false });
+      
+      // ✅ Vérifier les badges après l'enregistrement d'humeur
+      // Recharger l'utilisateur pour avoir les données à jour
+      const updatedUser = await User.findById(userId);
+      newBadges = await checkAndAwardBadges(updatedUser);
     }
 
     // Get personalized recommendations based on mood
@@ -39,8 +47,10 @@ exports.logMood = async (req, res, next) => {
       totalPoints: req.user.totalPoints,
       streakDays: req.user.streakDays,
       recommendations,
+      newBadges, // ✅ Ajout des badges débloqués
     });
   } catch (error) {
+    console.error('Error logging mood:', error);
     next(error);
   }
 };

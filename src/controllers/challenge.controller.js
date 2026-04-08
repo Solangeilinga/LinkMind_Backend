@@ -3,41 +3,49 @@ const User = require('../models/user.model');
 const { Badge, UserBadge } = require('../models/content.model');
 
 // Fonction utilitaire pour vérifier les badges
-async function checkAndAwardBadges(user, challenge) {
+async function checkAndAwardBadges(user, challenge = null) {
   const newBadges = [];
   
   try {
     // Compter le nombre total de défis complétés
     const totalCompletions = await ChallengeCompletion.countDocuments({ user: user._id });
     
-    // Récupérer tous les badges actifs
-    const badges = await Badge.find({ isActive: true });
+    // Compter le nombre d'enregistrements d'humeur
+    const Mood = require('../models/mood.model');
+    const moodCount = await Mood.countDocuments({ user: user._id });
+    
+    // ✅ Correction : Utiliser Badge déjà importé (pas besoin de require)
+    const badges = await Badge.find({ isActive: true }).sort({ order: 1 });
     
     for (const badge of badges) {
-      // Vérifier si l'utilisateur a déjà ce badge
-      const hasBadge = await UserBadge.findOne({ user: user._id, badge: badge._id });
+      // Vérifier si l'utilisateur a déjà ce badge (via le champ badges du user)
+      const hasBadge = user.badges.some(b => b.badgeId === badge.id);
       if (hasBadge) continue;
       
       // Vérifier les critères
       let earned = false;
-      if (badge.condition?.type === 'challenge_count' && 
-          totalCompletions >= (badge.condition?.threshold || 0)) {
-        earned = true;
-      } else if (badge.condition?.type === 'points' && 
-                 user.totalPoints >= (badge.condition?.threshold || 0)) {
-        earned = true;
-      } else if (badge.condition?.type === 'streak_days' && 
-                 user.streakDays >= (badge.condition?.threshold || 0)) {
-        earned = true;
+      switch (badge.condition?.type) {
+        case 'challenge_count':
+          if (totalCompletions >= (badge.condition?.threshold || 0)) earned = true;
+          break;
+        case 'points':
+          if (user.totalPoints >= (badge.condition?.threshold || 0)) earned = true;
+          break;
+        case 'streak_days':
+          if (user.streakDays >= (badge.condition?.threshold || 0)) earned = true;
+          break;
+        case 'mood_count':
+          if (moodCount >= (badge.condition?.threshold || 0)) earned = true;
+          break;
       }
       
       if (earned) {
-        await UserBadge.create({
-          user: user._id,
-          badge: badge._id,
-          earnedAt: new Date(),
-          challengeId: challenge._id
+        // Ajouter le badge au champ badges de l'utilisateur
+        user.badges.push({
+          badgeId: badge.id,
+          earnedAt: new Date()
         });
+        
         newBadges.push({
           id: badge.id,
           name: badge.name,
@@ -46,14 +54,18 @@ async function checkAndAwardBadges(user, challenge) {
         });
       }
     }
+    
+    // Sauvegarder l'utilisateur si des badges ont été ajoutés
+    if (newBadges.length > 0) {
+      await user.save({ validateBeforeSave: false });
+    }
+    
   } catch (error) {
     console.error('Error checking badges:', error);
   }
   
   return newBadges;
-}
-
-// GET /api/challenges/daily
+}// GET /api/challenges/daily
 exports.getDailyChallenges = async (req, res, next) => {
   try {
     const { moodLabel, moodScore } = req.query;
