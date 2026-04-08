@@ -4,18 +4,20 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path'); // ✅ AJOUTER
 const connectDB = require('./config/database');
 
 const authRoutes = require('./routes/auth.routes');
 const moodRoutes = require('./routes/mood.routes');
 const challengeRoutes = require('./routes/challenge.routes');
-const communityRoutes    = require('./routes/community.routes');
+const communityRoutes = require('./routes/community.routes');
 const userRoutes = require('./routes/user.routes');
 const contentRoutes = require('./routes/content.routes');
 const notificationRoutes = require('./routes/notification.routes');
-const assistantRoutes     = require('./routes/assistant.routes');
-const professionalRoutes  = require('./routes/professional.routes');
-const adRoutes            = require('./routes/ad.routes');
+const assistantRoutes = require('./routes/assistant.routes');
+const professionalRoutes = require('./routes/professional.routes');
+const adRoutes = require('./routes/ad.routes');
+const uploadRoutes = require('./routes/upload.routes'); // ✅ AJOUTER
 
 const errorHandler = require('./middleware/errorHandler');
 const { scheduleDailyChallenge } = require('./services/scheduler.service');
@@ -30,7 +32,7 @@ const PORT = process.env.PORT || 3000;
 // Connect to database
 connectDB();
 
-// Security middleware
+// ─── Security middleware ─────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -50,36 +52,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// Rate limiting global
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', limiter);
-
-// Auth routes get stricter limit
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { error: 'Too many login attempts, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-
-// API rate limit pour les actions sensibles
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30,
-  message: { error: 'Too many requests, slow down.' },
-});
-app.use('/api/community/posts', apiLimiter);
-app.use('/api/community/comments', apiLimiter);
-
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -89,16 +61,39 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-// Health check
+// ─── ✅ SERVIR LES FICHIERS STATIQUES (avatars) ───────────────────────────────
+// Créer le dossier uploads s'il n'existe pas
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+const avatarsDir = path.join(uploadsDir, 'avatars');
+
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true });
+
+// Servir les fichiers statiques
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ─── Rate limiting global ──────────────────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
+
+// ─── Routes PUBLIQUES ─────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString(), app: 'LinkMind API' });
 });
 
-// ===== API ROUTES =====
-// Routes publiques (sans authentification)
 app.use('/api/auth', authRoutes);
 
-// Routes protégées (avec authentification)
+// ─── Routes d'upload (publiques pour l'upload, mais avec auth à l'intérieur) ───
+app.use('/api/upload', uploadRoutes);
+
+// ─── Middleware d'authentification ────────────────────────────────────────────
 app.use('/api/mood', authenticate);
 app.use('/api/challenges', authenticate);
 app.use('/api/community', authenticate);
@@ -109,12 +104,12 @@ app.use('/api/content', authenticate);
 app.use('/api/notifications', authenticate);
 app.use('/api/assistant', authenticate);
 
-// Appliquer les middlewares de sécurité après authentification
+// ─── Middlewares de sécurité APRÈS authentification ───────────────────────────
 app.use(checkSessionTimeout);
 app.use(applyRateLimit);
 app.use(requireLegalAccepted);
 
-// Monter les routes protégées
+// ─── Routes PROTÉGÉES ──────────────────────────────────────────────────────────
 app.use('/api/mood', moodRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/community', communityRoutes);
@@ -125,21 +120,23 @@ app.use('/api/content', contentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/assistant', assistantRoutes);
 
-// 404 handler
+// ─── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Global error handler
+// ─── Global error handler ──────────────────────────────────────────────────────
 app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`\n🧠 LinkMind API running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 Health: http://localhost:${PORT}/health\n`);
+  console.log(`🔗 Health: http://localhost:${PORT}/health`);
+  console.log(`📁 Uploads: http://localhost:${PORT}/uploads/\n`);
   console.log('✅ Routes montées :');
   console.log('   - /api/auth (public)');
+  console.log('   - /api/upload (avatar upload)');
   console.log('   - /api/mood');
   console.log('   - /api/challenges');
   console.log('   - /api/community');
@@ -148,11 +145,12 @@ app.listen(PORT, () => {
   console.log('   - /api/users');
   console.log('   - /api/content');
   console.log('   - /api/notifications');
-  console.log('   - /api/assistant\n');
+  console.log('   - /api/assistant');
+  console.log('   - /uploads (static files)\n');
   console.log('🔒 Sécurité activée :');
   console.log('   - Session timeout (60 min)');
   console.log('   - Rate limiting (100 requêtes/15min)');
-  console.log('   - Brute force protection');
+  console.log('   - Brute force protection (5 tentatives login)');
   console.log('   - Détection comportements suspects\n');
 });
 

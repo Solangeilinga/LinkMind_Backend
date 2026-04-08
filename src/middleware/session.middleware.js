@@ -22,9 +22,11 @@ exports.checkSessionTimeout = async (req, res, next) => {
       });
     }
 
-    // Mettre à jour la dernière activité
-    user.lastActivity = new Date();
-    await user.save({ validateBeforeSave: false });
+    // ✅ CORRIGÉ: updateOne au lieu de save()
+    await User.updateOne(
+      { _id: user._id }, 
+      { lastActivity: new Date() }
+    );
 
     next();
   } catch (err) {
@@ -38,9 +40,11 @@ exports.checkSessionTimeout = async (req, res, next) => {
  */
 exports.refreshSession = async (req, res, next) => {
   if (req.user) {
-    await User.findByIdAndUpdate(req.user._id, { 
-      lastActivity: new Date() 
-    });
+    // ✅ CORRIGÉ: updateOne au lieu de findByIdAndUpdate
+    await User.updateOne(
+      { _id: req.user._id }, 
+      { lastActivity: new Date() }
+    ).catch(() => {});
   }
   next();
 };

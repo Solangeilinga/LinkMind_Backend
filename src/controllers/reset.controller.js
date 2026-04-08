@@ -1,18 +1,16 @@
-const crypto  = require('crypto');
+const crypto = require('crypto');
 const normalizePhone = (p) => p ? p.replace(/[\s\-\.]/g, '') : p;
-const User    = require('../models/user.model');
+const User = require('../models/user.model');
 const { sendSMS, sendPasswordReset } = require('../services/sms.service');
 const { sendPasswordResetEmail } = require('../services/email.service');
 
-// OTP en mémoire (clé: phone/email, valeur: {code, expiresAt})
-// En production, utiliser Redis
-const otpStore = new Map();
+// ✅ Modèle OTP MongoDB (à créer)
+const Otp = require('../models/otp.model');
 
-const generateOTP  = () => Math.floor(100000 + Math.random() * 900000).toString();
-const OTP_TTL_MS   = 10 * 60 * 1000; // 10 minutes
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const OTP_TTL_SECONDS = 10 * 60; // 10 minutes
 
 // ─── POST /auth/forgot-password ───────────────────────────────────────────────
-// Body: { phone } ou { email }
 exports.forgotPassword = async (req, res, next) => {
   try {
     let { phone, email } = req.body;
@@ -22,20 +20,28 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     const query = phone ? { phone: normalizePhone(phone) } : { email: email.toLowerCase() };
-    const user  = await User.findOne(query);
+    const user = await User.findOne(query);
 
-    // On ne révèle pas si le compte existe (sécurité)
+    // Ne pas révéler si le compte existe (sécurité)
     if (!user) {
       return res.json({ message: 'Si ce compte existe, un code a été envoyé.' });
     }
 
-    const code      = generateOTP();
-    const expiresAt = Date.now() + OTP_TTL_MS;
-    const key       = phone || email.toLowerCase();
-    otpStore.set(key, { code, expiresAt, userId: user._id.toString() });
+    const code = generateOTP();
+    const key = phone || email.toLowerCase();
 
-    // Log toujours en dev pour tester
-    console.log(`[OTP] ${phone || email} → Code: ${code}`);
+    // ✅ Supprimer l'ancien OTP s'il existe
+    await Otp.deleteOne({ key });
+
+    // ✅ Créer le nouvel OTP dans MongoDB
+    await Otp.create({
+      key,
+      code,
+      userId: user._id,
+      expiresAt: new Date(Date.now() + OTP_TTL_SECONDS * 1000),
+    });
+
+    console.log(`[OTP] ${key} → Code: ${code}`);
 
     if (phone) {
       await sendPasswordReset(phone, code);
@@ -48,7 +54,6 @@ exports.forgotPassword = async (req, res, next) => {
 };
 
 // ─── POST /auth/verify-otp ────────────────────────────────────────────────────
-// Body: { phone ou email, code }
 exports.verifyOtp = async (req, res, next) => {
   try {
     const { phone, email, code } = req.body;
@@ -56,24 +61,33 @@ exports.verifyOtp = async (req, res, next) => {
       return res.status(400).json({ error: 'Code et identifiant requis' });
     }
 
-    const key   = phone || (email?.toLowerCase());
-    const entry = otpStore.get(key);
+    const key = phone || email?.toLowerCase();
+    
+    // ✅ Chercher l'OTP dans MongoDB
+    const otpEntry = await Otp.findOne({ key, code, expiresAt: { $gt: new Date() } });
 
-    if (!entry || entry.code !== code || Date.now() > entry.expiresAt) {
+    if (!otpEntry) {
       return res.status(400).json({ error: 'Code invalide ou expiré' });
     }
 
     // Générer un token temporaire pour la réinitialisation
     const resetToken = crypto.randomBytes(32).toString('hex');
-    otpStore.set(`reset:${resetToken}`, { userId: entry.userId, expiresAt: Date.now() + OTP_TTL_MS });
-    otpStore.delete(key);
+
+    // ✅ Stocker le token de réinitialisation dans MongoDB
+    await Otp.create({
+      key: `reset:${resetToken}`,
+      userId: otpEntry.userId,
+      expiresAt: new Date(Date.now() + OTP_TTL_SECONDS * 1000),
+    });
+
+    // Supprimer l'OTP utilisé
+    await Otp.deleteOne({ _id: otpEntry._id });
 
     res.json({ resetToken });
   } catch (err) { next(err); }
 };
 
 // ─── POST /auth/reset-password ────────────────────────────────────────────────
-// Body: { resetToken, newPassword }
 exports.resetPassword = async (req, res, next) => {
   try {
     const { resetToken, newPassword } = req.body;
@@ -84,18 +98,39 @@ exports.resetPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Le mot de passe doit faire au moins 6 caractères' });
     }
 
-    const entry = otpStore.get(`reset:${resetToken}`);
-    if (!entry || Date.now() > entry.expiresAt) {
+    // ✅ Chercher le token dans MongoDB
+    const tokenEntry = await Otp.findOne({ 
+      key: `reset:${resetToken}`, 
+      expiresAt: { $gt: new Date() } 
+    });
+
+    if (!tokenEntry) {
       return res.status(400).json({ error: 'Token invalide ou expiré' });
     }
 
-    const user = await User.findById(entry.userId);
+    const user = await User.findById(tokenEntry.userId);
     if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
     user.password = newPassword;
     await user.save();
-    otpStore.delete(`reset:${resetToken}`);
+
+    // ✅ Supprimer le token utilisé
+    await Otp.deleteOne({ _id: tokenEntry._id });
+
+    // ✅ Supprimer tous les OTP expirés (nettoyage)
+    await Otp.deleteMany({ expiresAt: { $lt: new Date() } });
 
     res.json({ message: 'Mot de passe réinitialisé avec succès.' });
   } catch (err) { next(err); }
 };
+
+// ─── Nettoyage automatique des OTP expirés ────────────────────────────────────
+// Index TTL MongoDB gère automatiquement, mais on garde une sécurité
+setInterval(async () => {
+  try {
+    await Otp.deleteMany({ expiresAt: { $lt: new Date() } });
+    console.log('🧹 [OTP] Nettoyage des codes expirés effectué');
+  } catch (err) {
+    console.error('❌ [OTP] Erreur nettoyage:', err.message);
+  }
+}, 60 * 60 * 1000); // Toutes les heures

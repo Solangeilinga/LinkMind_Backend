@@ -109,4 +109,13 @@ challengeCompletionSchema.index({ user: 1, challenge: 1, date: 1 }, { unique: tr
 const Challenge = mongoose.model('Challenge', challengeSchema);
 const ChallengeCompletion = mongoose.model('ChallengeCompletion', challengeCompletionSchema);
 
+// ✅ Index pour les performances
+challengeSchema.index({ category: 1, difficulty: 1 });
+challengeSchema.index({ targetMoods: 1 });
+challengeSchema.index({ isActive: 1, order: 1 });
+challengeSchema.index({ isPremium: 1 });
+
+challengeCompletionSchema.index({ user: 1, completedAt: -1 });
+challengeCompletionSchema.index({ date: 1 });
+
 module.exports = { Challenge, ChallengeCompletion };

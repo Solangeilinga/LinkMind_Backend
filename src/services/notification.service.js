@@ -1,29 +1,92 @@
 const Notification = require('../models/notification.model');
 const User = require('../models/user.model');
 
+// ✅ Import admin SDK Firebase
+const admin = require('firebase-admin');
+
+// ✅ Initialiser Firebase Admin (à faire une fois dans app.js)
+let fcmInitialized = false;
+const initFCM = () => {
+  if (!process.env.FIREBASE_PROJECT_ID) {
+    console.log('⚠️ [FCM] Firebase non configuré');
+    return;
+  }
+  
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+  fcmInitialized = true;
+  console.log('✅ [FCM] Firebase initialisé');
+};
+
+// ─── Envoi push Firebase FCM ──────────────────────────────────────────────────
+const sendPush = async (fcmToken, { title, body, data = {} }) => {
+  if (!fcmInitialized) {
+    console.log('[FCM] Firebase non initialisé');
+    return;
+  }
+  
+  if (!fcmToken) {
+    console.log('[FCM] Pas de token FCM');
+    return;
+  }
+
+  try {
+    const message = {
+      notification: { title, body },
+      data: { ...data, click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+      token: fcmToken,
+      android: {
+        priority: 'high',
+        notification: { sound: 'default', channelId: 'default' },
+      },
+      apns: { payload: { aps: { sound: 'default' } } },
+    };
+
+    const response = await admin.messaging().send(message);
+    console.log(`✅ [FCM] Push envoyé à ${fcmToken.substring(0, 10)}...: ${response}`);
+    return response;
+  } catch (error) {
+    console.error('❌ [FCM] Erreur:', error.message);
+    if (error.code === 'messaging/registration-token-not-registered') {
+      // Token invalide, le supprimer
+      await User.findOneAndUpdate({ fcmToken }, { fcmToken: null });
+    }
+    throw error;
+  }
+};
+
 // ─── Créer une notification in-app ────────────────────────────────────────────
 const createNotification = async ({ recipientId, senderId, type, postId, commentId, title, body, emoji, metadata }) => {
   try {
-    // Ne pas notifier soi-même
     if (recipientId?.toString() === senderId?.toString()) return null;
 
     const notif = await Notification.create({
       recipient: recipientId,
-      sender:    senderId || null,
+      sender: senderId || null,
       type,
-      postId:    postId    || null,
+      postId: postId || null,
       commentId: commentId || null,
       title,
       body,
-      emoji:    emoji || '🔔',
+      emoji: emoji || '🔔',
       metadata: metadata || null,
     });
 
-    // Envoyer push FCM si token disponible
+    // ✅ Envoi push FCM
     const recipient = await User.findById(recipientId).select('fcmToken preferences');
     if (recipient?.fcmToken && recipient?.preferences?.notificationsEnabled !== false) {
-      await sendPush(recipient.fcmToken, { title, body, data: { type, postId: postId?.toString(), notifId: notif._id.toString() } })
-        .catch(err => console.warn('[FCM] Push failed:', err.message));
+      await sendPush(recipient.fcmToken, {
+        title,
+        body,
+        data: { type, postId: postId?.toString(), notifId: notif._id.toString() },
+      }).catch(err => console.warn('[FCM] Push failed:', err.message));
     }
 
     return notif;
@@ -31,33 +94,6 @@ const createNotification = async ({ recipientId, senderId, type, postId, comment
     console.error('[Notification] createNotification error:', err.message);
     return null;
   }
-};
-
-// ─── Envoi push Firebase FCM ──────────────────────────────────────────────────
-const sendPush = async (fcmToken, { title, body, data = {} }) => {
-  if (!process.env.FCM_SERVER_KEY) {
-    console.log('[FCM] FCM_SERVER_KEY non configuré — push ignoré');
-    return;
-  }
-
-  const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
-    },
-    body: JSON.stringify({
-      to: fcmToken,
-      notification: { title, body, sound: 'default' },
-      data,
-      priority: 'high',
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`FCM HTTP ${response.status}`);
-  }
-  return response.json();
 };
 
 // ─── Helpers par type d'action ─────────────────────────────────────────────────
@@ -70,7 +106,7 @@ const notifyComment = async ({ postAuthorId, senderId, postId, commentId, sender
     commentId,
     emoji: '💬',
     title: 'Nouveau commentaire',
-    body:  `${senderAlias || '👤 Anonyme'} a commenté ton post`,
+    body: `${senderAlias || '👤 Anonyme'} a commenté ton post`,
   });
 };
 
@@ -83,7 +119,7 @@ const notifyReply = async ({ commentAuthorId, senderId, postId, commentId, sende
     commentId,
     emoji: '↩️',
     title: 'Nouvelle réponse',
-    body:  `${senderAlias || '👤 Anonyme'} a répondu à ton commentaire`,
+    body: `${senderAlias || '👤 Anonyme'} a répondu à ton commentaire`,
   });
 };
 
@@ -96,7 +132,7 @@ const notifyReaction = async ({ postAuthorId, senderId, postId, reactionType, se
     postId,
     emoji: emojiMap[reactionType] || '❤️',
     title: 'Nouvelle réaction',
-    body:  `${senderAlias || '👤 Anonyme'} a réagi à ton post ${emojiMap[reactionType] || ''}`,
+    body: `${senderAlias || '👤 Anonyme'} a réagi à ton post ${emojiMap[reactionType] || ''}`,
     metadata: { reactionType },
   });
 };
@@ -109,7 +145,7 @@ const notifySameFeeling = async ({ postAuthorId, senderId, postId, count }) => {
     postId,
     emoji: '🤝',
     title: 'Quelqu\'un ressent la même chose',
-    body:  `${count} personne${count > 1 ? 's ressentent' : ' ressent'} la même chose que toi`,
+    body: `${count} personne${count > 1 ? 's ressentent' : ' ressent'} la même chose que toi`,
     metadata: { count },
   });
 };
@@ -121,10 +157,13 @@ const notifyBadge = async ({ userId, badgeId, badgeName, badgeIcon }) => {
     type: 'badge',
     emoji: badgeIcon || '🏅',
     title: 'Nouveau badge obtenu !',
-    body:  `Tu as débloqué le badge "${badgeName}"`,
+    body: `Tu as débloqué le badge "${badgeName}"`,
     metadata: { badgeId, badgeName, badgeIcon },
   });
 };
+
+// ✅ Initialiser FCM au chargement
+initFCM();
 
 module.exports = {
   createNotification,
@@ -133,4 +172,5 @@ module.exports = {
   notifyReaction,
   notifySameFeeling,
   notifyBadge,
+  initFCM,
 };

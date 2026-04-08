@@ -251,4 +251,16 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
+
+// ✅ Index pour le leaderboard et les performances
+userSchema.index({ totalPoints: -1 });
+userSchema.index({ streakDays: -1 });
+userSchema.index({ isActive: 1, totalPoints: -1 });
+userSchema.index({ level: 1 });
+userSchema.index({ lastActivity: -1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ email: 1 }, { sparse: true });
+userSchema.index({ phone: 1 }, { sparse: true });
+userSchema.index({ anonymousAlias: 1 }, { sparse: true });
+
 module.exports = mongoose.model('User', userSchema);

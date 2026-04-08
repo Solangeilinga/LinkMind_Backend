@@ -1,11 +1,10 @@
-const Ad   = require('../models/ad.model');
+const Ad = require('../models/ad.model');
 const User = require('../models/user.model');
 
-// ─── GET /api/ads?placement=community_feed ────────────────────────────────────
-// Retourne 1 pub aléatoire active pour ce placement (freemium uniquement)
+// ─── GET /api/ads?placement=community_feed&city=Ouagadougou ────────────────────
 exports.getAd = async (req, res, next) => {
   try {
-    const { placement = 'community_feed' } = req.query;
+    const { placement = 'community_feed', city } = req.query;
 
     // Premium = pas de pub
     if (req.user.isPremium) {
@@ -14,18 +13,13 @@ exports.getAd = async (req, res, next) => {
 
     const now = new Date();
     const filter = {
-      isActive:  true,
+      isActive: true,
       placement: placement,
-      $or: [
-        { startsAt: null },
-        { startsAt: { $lte: now } },
-      ],
-      $and: [
-        { $or: [{ endsAt: null }, { endsAt: { $gte: now } }] },
-      ],
+      $or: [{ startsAt: null }, { startsAt: { $lte: now } }],
+      $and: [{ $or: [{ endsAt: null }, { endsAt: { $gte: now } }] }],
     };
 
-    // Ciblage par âge si disponible
+    // ✅ Ciblage par âge
     const user = req.user;
     if (user.age) {
       filter.$or = [
@@ -34,13 +28,18 @@ exports.getAd = async (req, res, next) => {
       ];
     }
 
+    // ✅ Ciblage par ville (NOUVEAU)
+    if (city) {
+      filter.targetCity = { $in: [city, null, ''] };
+    }
+
     const count = await Ad.countDocuments(filter);
     if (count === 0) return res.json({ ad: null });
 
     // Pub aléatoire
     const skip = Math.floor(Math.random() * count);
-    const ad   = await Ad.findOne(filter).skip(skip)
-      .select('-advertiser -impressions -clicks -targetAgeMin -targetAgeMax');
+    const ad = await Ad.findOne(filter).skip(skip)
+      .select('-advertiser -impressions -clicks -targetAgeMin -targetAgeMax -targetCity');
 
     if (!ad) return res.json({ ad: null });
 

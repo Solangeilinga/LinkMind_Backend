@@ -2,29 +2,44 @@ const geminiService = require('../services/gemini.service');
 const { AppError } = require('../middleware/errorHandler');
 const User = require('../models/user.model');
 const AppConfig = require('../models/app-config.model');
+const AssistantSession = require('../models/assistant-session.model'); // ✅ Nouveau modèle
 
-const isSameDay = (d1, d2) =>
-  d1.getFullYear() === d2.getFullYear() &&
-  d1.getMonth()    === d2.getMonth()    &&
-  d1.getDate()     === d2.getDate();
-
-// In-memory session store (use Redis in production)
-const sessions = new Map();
 const SESSION_TTL = 30 * 60 * 1000; // 30 minutes
 
-function getSession(userId) {
-  const session = sessions.get(userId);
-  if (!session || Date.now() - session.lastActivity > SESSION_TTL) {
-    const newSession = { history: [], lastActivity: Date.now() };
-    sessions.set(userId, newSession);
-    return newSession;
+// ✅ Remplacer la Map par MongoDB
+async function getSession(userId) {
+  let session = await AssistantSession.findOne({ userId });
+  
+  if (!session) {
+    session = await AssistantSession.create({
+      userId,
+      history: [],
+      lastActivity: new Date(),
+    });
+    return session;
   }
+  
+  // Vérifier expiration
+  const lastActivity = session.lastActivity || session.createdAt;
+  const inactiveTime = Date.now() - new Date(lastActivity).getTime();
+  
+  if (inactiveTime > SESSION_TTL) {
+    // Session expirée, créer une nouvelle
+    session.history = [];
+    session.lastActivity = new Date();
+    await session.save();
+  }
+  
   return session;
 }
 
+const isSameDay = (d1, d2) =>
+  d1.getFullYear() === d2.getFullYear() &&
+  d1.getMonth() === d2.getMonth() &&
+  d1.getDate() === d2.getDate();
+
 /**
  * POST /api/assistant/chat
- * Body: { message, context? }
  */
 exports.chat = async (req, res, next) => {
   try {
@@ -43,11 +58,11 @@ exports.chat = async (req, res, next) => {
     // ── Vérification limite quotidienne (freemium uniquement) ──
     const user = await User.findById(userId);
     const DAILY_LIMIT = await AppConfig.get('mindo_daily_limit', 10);
+    
     if (!user.isPremium) {
       const today = new Date();
       const lastDate = user.mindoLastMessageDate ? new Date(user.mindoLastMessageDate) : null;
 
-      // Reset si nouveau jour
       const currentCount = (lastDate && isSameDay(lastDate, today))
         ? user.mindoMessageCount
         : 0;
@@ -69,7 +84,8 @@ exports.chat = async (req, res, next) => {
       });
     }
 
-    const session = getSession(userId);
+    // ✅ Session MongoDB
+    const session = await getSession(userId);
 
     // Get AI response
     const response = await geminiService.chat(message.trim(), session.history, context || {});
@@ -77,12 +93,14 @@ exports.chat = async (req, res, next) => {
     // Update session history
     session.history.push({ role: 'user', content: message.trim() });
     session.history.push({ role: 'assistant', content: response.message });
-    session.lastActivity = Date.now();
+    session.lastActivity = new Date();
 
     // Keep history manageable (last 10 exchanges)
     if (session.history.length > 20) {
       session.history = session.history.slice(-20);
     }
+    
+    await session.save();
 
     // Re-fetch updated count for response
     const updatedUser = await User.findById(userId).select('isPremium mindoMessageCount mindoLastMessageDate');
@@ -100,13 +118,12 @@ exports.chat = async (req, res, next) => {
         professionalMessage: response.professionalMessage,
         quickActions: response.quickActions,
         sessionLength: session.history.length / 2,
-        messagesUsed:  updatedUser.isPremium ? null : usedToday,
+        messagesUsed: updatedUser.isPremium ? null : usedToday,
         messagesLimit: updatedUser.isPremium ? null : DAILY_LIMIT,
-        isPremium:     updatedUser.isPremium,
+        isPremium: updatedUser.isPremium,
       },
     });
   } catch (error) {
-    // Return graceful fallback instead of crashing the app
     const isNetwork = error.message?.includes('fetch failed') || error.message?.includes('network');
     const isQuota = error.message?.includes('quota') || error.message?.includes('429');
     
@@ -136,6 +153,6 @@ exports.chat = async (req, res, next) => {
  */
 exports.clearSession = async (req, res) => {
   const userId = req.user._id.toString();
-  sessions.delete(userId);
+  await AssistantSession.findOneAndDelete({ userId });
   res.json({ success: true, message: 'Conversation réinitialisée' });
 };

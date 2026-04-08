@@ -105,4 +105,9 @@ moodSchema.statics.getMonthlyTrend = async function (userId) {
   ]);
 };
 
+// ✅ Index supplémentaires
+moodSchema.index({ user: 1, recordedAt: -1 });
+moodSchema.index({ label: 1 });
+moodSchema.index({ score: 1 });
+
 module.exports = mongoose.model('Mood', moodSchema);

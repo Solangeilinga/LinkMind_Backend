@@ -1,11 +1,58 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/auth.controller');
 const resetController = require('../controllers/reset.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 const { body } = require('express-validator');
 const User = require('../models/user.model');
 const { sendVerificationEmail } = require('../services/email.service');
+
+// ─── Rate limiting ─────────────────────────────────────────────────────────────
+// Limiteur pour login (5 tentatives / 15 min)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: {
+    error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  },
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const identifier = req.body.email || req.body.phone || 'unknown';
+    return `${req.ip}:${identifier}`;
+  }
+});
+
+// Limiteur pour inscription (10 inscriptions / heure)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: 10,
+  message: {
+    error: 'Trop de tentatives d\'inscription. Réessayez plus tard.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  }
+});
+
+// Limiteur pour forgot-password (3 demandes / 15 min)
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3,
+  message: {
+    error: 'Trop de demandes. Réessayez dans 15 minutes.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  }
+});
+
+// Limiteur pour réinitialisation (5 tentatives / heure)
+const resetPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: 5,
+  message: {
+    error: 'Trop de tentatives. Réessayez plus tard.',
+    code: 'RATE_LIMIT_EXCEEDED'
+  }
+});
 
 // ─── Validation personnalisée ─────────────────────────────────────────────────
 const validateContactMethod = (value, { req }) => {
@@ -15,15 +62,8 @@ const validateContactMethod = (value, { req }) => {
   return true;
 };
 
-const validateCode = (value) => {
-  if (!value || !/^\d{6}$/.test(value)) {
-    throw new Error('Code invalide. Format à 6 chiffres requis.');
-  }
-  return true;
-};
-
 // ─── Inscription ───────────────────────────────────────────────────────────────
-router.post('/register', [
+router.post('/register', registerLimiter, [
   body('firstName').trim().notEmpty().withMessage('Le prénom est requis'),
   body('lastName').trim().notEmpty().withMessage('Le nom est requis'),
   body('email')
@@ -40,15 +80,15 @@ router.post('/register', [
 ], authController.register);
 
 // ─── Authentification ──────────────────────────────────────────────────────────
-router.post('/login', authController.login);
+router.post('/login', loginLimiter, authController.login);
 router.post('/refresh', authController.refreshToken);
 router.post('/logout', authenticate, authController.logout);
 router.patch('/change-password', authenticate, authController.changePassword);
 
 // ─── Reset password (OTP flow) ────────────────────────────────────────────────
-router.post('/forgot-password', resetController.forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, resetController.forgotPassword);
 router.post('/verify-otp', resetController.verifyOtp);
-router.post('/reset-password', resetController.resetPassword);
+router.post('/reset-password', resetPasswordLimiter, resetController.resetPassword);
 
 // ─── Vérification email ───────────────────────────────────────────────────────
 router.post('/send-verification', authenticate, async (req, res, next) => {
@@ -74,19 +114,18 @@ router.post('/send-verification', authenticate, async (req, res, next) => {
     
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = code;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes (aligné avec email.service)
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     user.otpChannel = 'email';
     user.lastVerificationSent = new Date();
     await user.save({ validateBeforeSave: false });
     
-    // Envoi email
     await sendVerificationEmail(user.email, code);
     
     console.log(`📧 [VERIFY EMAIL] ${user.email} → code: ${code}`);
     
     res.json({
       message: 'Code de vérification envoyé par email.',
-      expiresIn: 600, // 10 minutes en secondes
+      expiresIn: 600,
       ...(process.env.NODE_ENV !== 'production' && { code }),
     });
   } catch (err) { 
@@ -99,7 +138,6 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
   try {
     const { code } = req.body;
     
-    // Validation du code
     if (!code || !/^\d{6}$/.test(code)) {
       return res.status(400).json({ error: 'Code invalide. Format à 6 chiffres requis.' });
     }
@@ -122,7 +160,6 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Code expiré. Demandes-en un nouveau.' });
     }
     
-    // Marquer l'email comme vérifié
     user.isEmailVerified = true;
     user.otp = null;
     user.otpExpires = null;
@@ -153,7 +190,6 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Email déjà vérifié' });
     }
     
-    // Anti-spam : 1 minute minimum entre deux envois
     const lastAttempt = user.lastVerificationSent;
     if (lastAttempt && (Date.now() - new Date(lastAttempt).getTime()) < 60 * 1000) {
       return res.status(429).json({ 

@@ -33,5 +33,9 @@ const notificationSchema = new mongoose.Schema({
 
 // Index pour les requêtes fréquentes
 notificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
+// ✅ Index supplémentaires
+notificationSchema.index({ recipient: 1, createdAt: -1 });
+notificationSchema.index({ recipient: 1, isRead: 1 });
+notificationSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

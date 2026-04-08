@@ -88,4 +88,26 @@ const Comment        = mongoose.model('Comment',        commentSchema);
 const GroupChallenge = mongoose.model('GroupChallenge', groupChallengeSchema);
 const ModerationLog  = mongoose.model('ModerationLog',  moderationLogSchema);
 
+
+// À la fin du fichier, après les schémas, avant les exports
+
+// ✅ Index pour les performances
+postSchema.index({ createdAt: -1 });
+postSchema.index({ author: 1, createdAt: -1 });
+postSchema.index({ postType: 1, createdAt: -1 });
+postSchema.index({ isVisible: 1, createdAt: -1 });
+postSchema.index({ likesCount: -1 });
+postSchema.index({ commentsCount: -1 });
+
+commentSchema.index({ post: 1, createdAt: 1 });
+commentSchema.index({ post: 1, parentComment: 1 });
+commentSchema.index({ author: 1, createdAt: -1 });
+commentSchema.index({ isVisible: 1 });
+
+groupChallengeSchema.index({ endDate: 1, isActive: 1 });
+groupChallengeSchema.index({ startDate: 1 });
+
+moderationLogSchema.index({ createdAt: -1 });
+moderationLogSchema.index({ targetType: 1, targetId: 1 });
+
 module.exports = { Post, Comment, GroupChallenge, ModerationLog };
