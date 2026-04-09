@@ -98,7 +98,7 @@ router.post('/send-verification', authenticate, async (req, res, next) => {
       });
     }
     
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
@@ -162,7 +162,7 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
     
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
@@ -175,7 +175,7 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
     }
     
     // ✅ Marquer le compte comme vérifié
-    user.isVerified = true;
+    user.isEmailVerified = true;
     user.otp = null;
     user.otpExpires = null;
     await user.save({ validateBeforeSave: false });
@@ -201,7 +201,7 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Aucun moyen de contact pour la vérification.' });
     }
     
-    if (user.isVerified) {
+    if (user.isEmailVerified) {
       return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     

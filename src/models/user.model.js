@@ -90,7 +90,7 @@ const userSchema = new mongoose.Schema({
   otpExpires:   { type: Date,   select: false, default: null },
   otpChannel:   { type: String, select: false, default: null },
   isActive: { type: Boolean, default: true },
-  isVerified: { type: Boolean, default: false },
+  isEmailVerified: { type: Boolean, default: false },
 
   // Acceptation légale
   legalAccepted:    { type: Boolean, default: false },
