@@ -7,11 +7,11 @@ const { authenticate } = require('../middleware/auth.middleware');
 const { body } = require('express-validator');
 const User = require('../models/user.model');
 const { sendVerificationEmail } = require('../services/email.service');
+const { sendOTP } = require('../services/sms.service'); // ✅ AJOUTER
 
-// ─── Rate limiting ─────────────────────────────────────────────────────────────
-// Limiteur pour login (5 tentatives / 15 min)
+// ─── Rate limiting (inchangé) ─────────────────────────────────────────────────
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
     error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.',
@@ -24,9 +24,8 @@ const loginLimiter = rateLimit({
   }
 });
 
-// Limiteur pour inscription (10 inscriptions / heure)
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 heure
+  windowMs: 60 * 60 * 1000,
   max: 10,
   message: {
     error: 'Trop de tentatives d\'inscription. Réessayez plus tard.',
@@ -34,9 +33,8 @@ const registerLimiter = rateLimit({
   }
 });
 
-// Limiteur pour forgot-password (3 demandes / 15 min)
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 3,
   message: {
     error: 'Trop de demandes. Réessayez dans 15 minutes.',
@@ -44,9 +42,8 @@ const forgotPasswordLimiter = rateLimit({
   }
 });
 
-// Limiteur pour réinitialisation (5 tentatives / heure)
 const resetPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 heure
+  windowMs: 60 * 60 * 1000,
   max: 5,
   message: {
     error: 'Trop de tentatives. Réessayez plus tard.',
@@ -90,41 +87,57 @@ router.post('/forgot-password', forgotPasswordLimiter, resetController.forgotPas
 router.post('/verify-otp', resetController.verifyOtp);
 router.post('/reset-password', resetPasswordLimiter, resetController.resetPassword);
 
-// ─── Vérification email ───────────────────────────────────────────────────────
+// ─── Vérification (Email ou SMS) ──────────────────────────────────────────────
 router.post('/send-verification', authenticate, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     
-    if (!user.email) {
+    if (!user.email && !user.phone) {
       return res.status(400).json({ 
-        error: 'Pas d\'email associé à ce compte. Ajoute un email dans ton profil.' 
+        error: 'Aucun moyen de contact pour la vérification. Ajoute un email ou un téléphone.' 
       });
     }
     
-    if (user.isEmailVerified) {
-      return res.status(400).json({ error: 'Email déjà vérifié' });
+    if (user.isVerified) {
+      return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
-    // Anti-spam : éviter d'envoyer trop de codes
+    // Anti-spam
     if (user.otpExpires && user.otpExpires > new Date(Date.now() - 2 * 60 * 1000)) {
       return res.status(429).json({ 
         error: 'Un code a déjà été envoyé récemment. Attends 2 minutes.' 
       });
     }
     
+    // ✅ Déterminer le canal (priorité email si disponible)
+    let channel = 'email';
+    let destination = user.email;
+    
+    if (!destination && user.phone) {
+      channel = 'sms';
+      destination = user.phone;
+    }
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = code;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    user.otpChannel = 'email';
+    user.otpChannel = channel;
     user.lastVerificationSent = new Date();
     await user.save({ validateBeforeSave: false });
     
-    await sendVerificationEmail(user.email, code);
-    
-    console.log(`📧 [VERIFY EMAIL] ${user.email} → code: ${code}`);
+    // Envoi selon le canal
+    if (channel === 'email') {
+      await sendVerificationEmail(destination, code);
+      console.log(`📧 [VERIFY] ${destination} → code: ${code}`);
+    } else {
+      await sendOTP(destination, code);
+      console.log(`📱 [VERIFY] ${destination} → code: ${code}`);
+    }
     
     res.json({
-      message: 'Code de vérification envoyé par email.',
+      message: `Code envoyé par ${channel === 'email' ? 'email' : 'SMS'}`,
+      channel,
+      destination: channel === 'email' ? user.email?.replace(/(.{2})(.*)(@.*)/, '$2***$3') : user.phone?.slice(-4),
       expiresIn: 600,
       ...(process.env.NODE_ENV !== 'production' && { code }),
     });
@@ -134,6 +147,7 @@ router.post('/send-verification', authenticate, async (req, res, next) => {
   }
 });
 
+// ─── Vérification du code (Email ou SMS) ──────────────────────────────────────
 router.post('/verify-email', authenticate, async (req, res, next) => {
   try {
     const { code } = req.body;
@@ -148,8 +162,8 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
     
-    if (user.isEmailVerified) {
-      return res.status(400).json({ error: 'Email déjà vérifié' });
+    if (user.isVerified) {
+      return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
     if (!user.otp || user.otp !== code) {
@@ -160,19 +174,20 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Code expiré. Demandes-en un nouveau.' });
     }
     
-    user.isEmailVerified = true;
+    // ✅ Marquer le compte comme vérifié
+    user.isVerified = true;
     user.otp = null;
     user.otpExpires = null;
     await user.save({ validateBeforeSave: false });
     
-    console.log(`✅ [VERIFY_EMAIL] Utilisateur ${user._id} a vérifié son email: ${user.email}`);
+    console.log(`✅ [VERIFY] Utilisateur ${user._id} vérifié via ${user.otpChannel}`);
     
     res.json({ 
-      message: 'Email vérifié avec succès ✅', 
+      message: 'Compte vérifié avec succès ✅', 
       verified: true,
     });
   } catch (err) { 
-    console.error('❌ [VERIFY_EMAIL] Erreur:', err);
+    console.error('❌ [VERIFY] Erreur:', err);
     next(err); 
   }
 });
@@ -182,12 +197,12 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     
-    if (!user.email) {
-      return res.status(400).json({ error: 'Pas d\'email associé à ce compte' });
+    if (!user.email && !user.phone) {
+      return res.status(400).json({ error: 'Aucun moyen de contact pour la vérification.' });
     }
     
-    if (user.isEmailVerified) {
-      return res.status(400).json({ error: 'Email déjà vérifié' });
+    if (user.isVerified) {
+      return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
     const lastAttempt = user.lastVerificationSent;
@@ -197,19 +212,33 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
       });
     }
     
+    // ✅ Déterminer le canal
+    let channel = 'email';
+    let destination = user.email;
+    
+    if (!destination && user.phone) {
+      channel = 'sms';
+      destination = user.phone;
+    }
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = code;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    user.otpChannel = 'email';
+    user.otpChannel = channel;
     user.lastVerificationSent = new Date();
     await user.save({ validateBeforeSave: false });
     
-    await sendVerificationEmail(user.email, code);
+    if (channel === 'email') {
+      await sendVerificationEmail(destination, code);
+    } else {
+      await sendOTP(destination, code);
+    }
     
-    console.log(`📧 [RESEND VERIFICATION] ${user.email} → code: ${code}`);
+    console.log(`📧 [RESEND VERIFICATION] ${destination} → code: ${code}`);
     
     res.json({
-      message: 'Nouveau code envoyé par email.',
+      message: `Nouveau code envoyé par ${channel === 'email' ? 'email' : 'SMS'}`,
+      channel,
       expiresIn: 600,
       ...(process.env.NODE_ENV !== 'production' && { code }),
     });
