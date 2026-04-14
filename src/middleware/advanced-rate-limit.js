@@ -65,13 +65,13 @@ exports.passwordResetLimiter = rateLimit({
 // API GENERAL LIMITER - 100 req/15min pour gratuit, 1000 pour premium
 // ================================================
 exports.apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
+  windowMs: 10 * 60 * 1000,  // 10 minutes
   max: (req) => {
     // Premium users have higher limits
     if (req.user && req.user.isPremium) {
       return 1000;
     }
-    return 100;
+    return 300;
   },
   message: 'Too many requests',
   keyGenerator: (req) => {
