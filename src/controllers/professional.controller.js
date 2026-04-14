@@ -25,6 +25,7 @@ const getTypeLabels = async () => {
 };
 
 // ─── GET /api/professionals ───────────────────────────────────────────────────
+// ─── GET /api/professionals ───────────────────────────────────────────────────
 exports.list = async (req, res, next) => {
   try {
     const { type, city, search, page = 1, limit = 20 } = req.query;
@@ -40,20 +41,22 @@ exports.list = async (req, res, next) => {
       ];
     }
 
+    // ✅ AJOUT DE .LEAN() ICI
     const pros = await Professional.find(filter)
       .sort({ isVerified: -1, rating: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .select('-commissionRate');
+      .select('-commissionRate')
+      .lean();
 
     const total = await Professional.countDocuments(filter);
 
     const TYPE_LABELS = await getTypeLabels();
     const formattedPros = pros.map(p => {
-      const proObj = p.toObject();
+      // Plus besoin de p.toObject() car .lean() renvoie déjà du JSON pur
       return {
-        ...proObj,
-        id:        proObj._id,
+        ...p,
+        id:        p._id,
         fullName:  `${p.firstName || ''} ${p.lastName || ''}`.trim(),
         typeLabel: TYPE_LABELS[p.type] || p.type,
       };

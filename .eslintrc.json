@@ -1,0 +1,189 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "airbnb-base",
+    "prettier"
+  ],
+  "plugins": [
+    "jest",
+    "security"
+  ],
+  "parser": "espree",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": false
+    }
+  },
+  "env": {
+    "node": true,
+    "es2022": true,
+    "jest": true
+  },
+  "rules": {
+    // Error Prevention
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-alert": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error",
+
+    // Security
+    "security/detect-non-literal-regexp": "warn",
+    "security/detect-unsafe-regex": "warn",
+    "security/detect-buffer-noassert": "warn",
+    "security/detect-child-process": "warn",
+    "security/detect-no-csrf-before-method-override": "warn",
+    "security/detect-non-literal-fs-filename": "warn",
+    "security/detect-non-literal-require": "warn",
+    "security/detect-object-injection": "warn",
+
+    // Best Practices
+    "eqeqeq": [
+      "error",
+      "always"
+    ],
+    "curly": [
+      "error",
+      "all"
+    ],
+    "brace-style": [
+      "error",
+      "1tbs"
+    ],
+    "no-param-reassign": [
+      "error",
+      {
+        "props": true
+      }
+    ],
+    "no-shadow": "error",
+    "no-use-before-define": [
+      "error",
+      {
+        "functions": false
+      }
+    ],
+
+    // Code Quality
+    "comma-dangle": [
+      "error",
+      "always-multiline"
+    ],
+    "indent": [
+      "error",
+      2
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "max-len": [
+      "warn",
+      {
+        "code": 100,
+        "ignoreUrls": true,
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
+      }
+    ],
+    "max-depth": [
+      "warn",
+      3
+    ],
+    "max-nested-callbacks": [
+      "warn",
+      3
+    ],
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 2
+      }
+    ],
+    "no-trailing-spaces": "error",
+    "object-curly-spacing": [
+      "error",
+      "always"
+    ],
+    "array-bracket-spacing": [
+      "error",
+      "never"
+    ],
+    "space-before-blocks": "error",
+    "space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
+    ],
+
+    // Comments
+    "spaced-comment": [
+      "error",
+      "always"
+    ],
+    "no-inline-comments": "warn",
+
+    // Airbnb overrides
+    "func-names": "off",
+    "object-shorthand": [
+      "error",
+      "always"
+    ],
+    "prefer-arrow-callback": "error",
+    "prefer-destructuring": [
+      "error",
+      {
+        "VariableDeclarator": {
+          "array": true,
+          "object": true
+        },
+        "AssignmentExpression": {
+          "array": true,
+          "object": true
+        }
+      }
+    ],
+
+    // Jest
+    "jest/no-disabled-tests": "warn",
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "error",
+    "jest/valid-expect": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/__tests__/**",
+        "**/*.test.js"
+      ],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-undef": "off"
+      }
+    }
+  ]
+}

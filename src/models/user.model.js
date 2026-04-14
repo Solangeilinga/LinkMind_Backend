@@ -13,8 +13,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: false,
-    unique: true,
-    sparse: true,
+    // ✅ unique et sparse sont déplacés dans l'index explicite en bas
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
@@ -35,7 +34,7 @@ const userSchema = new mongoose.Schema({
     default: null,
     trim: true,
     maxlength: 30,
-    sparse: true,
+    // ✅ pas d'index ici
   },
   firstName:  { type: String, default: null, trim: true, maxlength: 50 },
   lastName:   { type: String, default: null, trim: true, maxlength: 50 },
@@ -45,7 +44,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     maxlength: 20,
     match: [/^(\+?\d{6,15})$/, 'Format invalide. Ex: +22661645069 ou 61645069'],
-    sparse: true,
+    // ✅ pas d'index ici
   },
   age:        { type: Number, default: null, min: 10, max: 120 },
   city:       { type: String, default: null, trim: true, maxlength: 100 },
@@ -95,23 +94,19 @@ const userSchema = new mongoose.Schema({
   // Acceptation légale
   legalAccepted:    { type: Boolean, default: false },
   legalAcceptedAt:  { type: Date,    default: null },
-  legalVersion:     { type: String,  default: null }, // version des CGU acceptées
+  legalVersion:     { type: String,  default: null },
 
   // ========== NOUVEAUX CHAMPS DE SÉCURITÉ ==========
-  
-  // Session timeout
   lastActivity: { type: Date, default: Date.now },
   sessionId: { type: String, default: null },
   maxConcurrentSessions: { type: Number, default: 3 },
   
-  // Brute force protection
   loginAttempts: { type: Number, default: 0 },
   lastLoginAttempt: { type: Date, default: null },
   isLocked: { type: Boolean, default: false },
   lockedUntil: { type: Date, default: null },
   accountStatus: { type: String, enum: ['active', 'locked', 'suspended'], default: 'active' },
   
-  // Détection de comportements suspects
   activityLog: [{
     type: { type: String, enum: ['login', 'post', 'comment', 'report', 'like'] },
     timestamp: { type: Date, default: Date.now },
@@ -133,7 +128,6 @@ const userSchema = new mongoose.Schema({
     resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }],
   
-  // Chiffrement des messages (clés pour E2EE)
   publicKey: { type: String, default: null, select: false },
   privateKey: { type: String, default: null, select: false },
   encryptionEnabled: { type: Boolean, default: false },
@@ -180,8 +174,6 @@ userSchema.methods.updateStreak = function () {
 };
 
 // ========== NOUVELLES MÉTHODES DE SÉCURITÉ ==========
-
-// Vérifier si la session est active
 userSchema.methods.isSessionActive = function () {
   const timeout = 60 * 60 * 1000; // 60 minutes
   const lastActivity = this.lastActivity || this.createdAt;
@@ -189,11 +181,9 @@ userSchema.methods.isSessionActive = function () {
   return inactiveTime < timeout;
 };
 
-// Vérifier si le compte est verrouillé
 userSchema.methods.isAccountLocked = function () {
   if (!this.isLocked) return false;
   if (this.lockedUntil && this.lockedUntil < new Date()) {
-    // Le verrouillage a expiré
     this.isLocked = false;
     this.loginAttempts = 0;
     this.lockedUntil = null;
@@ -202,7 +192,6 @@ userSchema.methods.isAccountLocked = function () {
   return true;
 };
 
-// Enregistrer une activité suspecte
 userSchema.methods.addSuspiciousFlag = function (type, score, metadata = {}) {
   this.flags = this.flags || [];
   this.flags.push({
@@ -213,15 +202,13 @@ userSchema.methods.addSuspiciousFlag = function (type, score, metadata = {}) {
   });
   this.suspicionScore = (this.suspicionScore || 0) + score;
   
-  // Si score > 70, restreindre le compte
   if (this.suspicionScore > 70 && !this.restricted) {
     this.restricted = true;
     this.restrictionReason = 'Activité suspecte détectée';
-    this.restrictedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    this.restrictedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
   }
 };
 
-// Enregistrer une activité
 userSchema.methods.recordActivity = function (type, metadata = {}, ip, userAgent) {
   this.activityLog = this.activityLog || [];
   this.activityLog.push({
@@ -232,7 +219,6 @@ userSchema.methods.recordActivity = function (type, metadata = {}, ip, userAgent
     userAgent
   });
   
-  // Garder seulement les 100 dernières activités
   if (this.activityLog.length > 100) {
     this.activityLog = this.activityLog.slice(-100);
   }
@@ -251,15 +237,18 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
-
-// ✅ Index pour le leaderboard et les performances
+// ========== INDEX CORRIGÉS (sans doublon) ==========
 userSchema.index({ totalPoints: -1 });
 userSchema.index({ streakDays: -1 });
 userSchema.index({ isActive: 1, totalPoints: -1 });
 userSchema.index({ level: 1 });
 userSchema.index({ lastActivity: -1 });
 userSchema.index({ createdAt: -1 });
-userSchema.index({ email: 1 }, { sparse: true });
+
+// ✅ Index unique et sparse pour email (contrainte d'unicité + documents sans email autorisés)
+userSchema.index({ email: 1 }, { unique: true, sparse: true });
+
+// ✅ Index simples et sparses pour phone et anonymousAlias
 userSchema.index({ phone: 1 }, { sparse: true });
 userSchema.index({ anonymousAlias: 1 }, { sparse: true });
 

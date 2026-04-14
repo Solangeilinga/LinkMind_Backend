@@ -44,19 +44,25 @@ const buildReactionSummary = (reactions, userId) => {
  * @returns {Object} Post sérialisé
  */
 const serializePost = (post, userId) => {
-  const obj = post.toObject();
-  const alias = post.author?.anonymousAlias || null;
-  const authorId = post.author?._id ? post.author._id.toString() : (post.author?.toString() || null);
+  // ✅ CORRECTION : Gère le cas où le post vient d'une requête avec .lean()
+  const obj = typeof post.toObject === 'function' ? post.toObject() : { ...post };
+  
+  const alias = obj.author?.anonymousAlias || null;
+  const authorId = obj.author?._id ? obj.author._id.toString() : (obj.author?.toString() || null);
   
   obj.authorId = authorId;
   obj.isMine = authorId === userId;
   obj.anonymousAlias = alias;
   obj.author = { anonymousAlias: alias };
-  obj.isLiked = (post.likes || []).map(id => id.toString()).includes(userId);
-  obj.likesCount = (post.likes || []).length;
-  obj.isSameFeeling = (post.sameFeelings || []).map(id => id.toString()).includes(userId);
-  obj.sameFeelingsCount = (post.sameFeelings || []).length;
-  obj.reactions = buildReactionSummary(post.reactions || [], userId);
+  
+  // Sécuriser les map() au cas où les tableaux seraient null/undefined
+  obj.isLiked = (obj.likes || []).map(id => id.toString()).includes(userId);
+  obj.likesCount = (obj.likes || []).length;
+  
+  obj.isSameFeeling = (obj.sameFeelings || []).map(id => id.toString()).includes(userId);
+  obj.sameFeelingsCount = (obj.sameFeelings || []).length;
+  
+  obj.reactions = buildReactionSummary(obj.reactions || [], userId);
   
   return obj;
 };
@@ -247,76 +253,83 @@ exports.editPost = async (req, res, next) => {
 };
 
 // ─── Like / unlike a post ─────────────────────────────────────────────────────────
+// ─── Like / unlike a post (CORRIGÉ AVEC OPÉRATEURS ATOMIQUES) ───────────────
 exports.toggleLike = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const userId = req.user._id;
     
+    // 1. On vérifie juste si le post existe et l'état actuel pour ce user
+    const post = await Post.findById(req.params.id).select('likes isVisible');
     if (!post || post.isVisible === false) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    const userId = req.user._id;
-    const idx = post.likes.findIndex(id => id.toString() === userId.toString());
-    const wasLiked = idx === -1;
+    const wasLiked = post.likes.some(id => id.toString() === userId.toString());
     
-    if (wasLiked) {
-      post.likes.push(userId);
-    } else {
-      post.likes.splice(idx, 1);
-    }
-    
-    post.likesCount = post.likes.length;
-    await post.save();
+    // 2. Mise à jour atomique (thread-safe)
+    const updateOp = wasLiked 
+      ? { $pull: { likes: userId } } 
+      : { $addToSet: { likes: userId } };
 
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id, 
+      updateOp, 
+      { new: true } // Renvoie le document mis à jour
+    ).select('likes');
+
+    // 3. Sécurité / Activité
     await SuspiciousActivityService.recordActivity(
-      req.user._id, 'like',
-      { postId: req.params.id, liked: wasLiked },
+      userId, 'like',
+      { postId: req.params.id, liked: !wasLiked },
       req.ip, req.headers['user-agent']
     );
 
-    res.json({ liked: wasLiked, likesCount: post.likes.length });
+    res.json({ liked: !wasLiked, likesCount: updatedPost.likes.length });
   } catch (err) { 
     console.error('❌ [TOGGLE_LIKE] Erreur:', err);
     next(err); 
   }
 };
 
-// ─── "Moi aussi" — toggle same feeling ────────────────────────────────────────────
+// ─── "Moi aussi" — toggle same feeling (CORRIGÉ) ────────────────────────────
 exports.toggleSameFeeling = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const post = await Post.findById(req.params.id);
     
+    const post = await Post.findById(req.params.id).select('sameFeelings isVisible author');
     if (!post || post.isVisible === false) {
       return res.status(404).json({ error: 'Post introuvable' });
     }
 
-    const idx = post.sameFeelings.findIndex(id => id.toString() === userId.toString());
-    const wasAdded = idx === -1;
+    const wasAdded = post.sameFeelings.some(id => id.toString() === userId.toString());
     
-    if (wasAdded) {
-      post.sameFeelings.push(userId);
-    } else {
-      post.sameFeelings.splice(idx, 1);
-    }
-    
-    post.sameFeelingsCount = post.sameFeelings.length;
-    await post.save();
+    const updateOp = wasAdded 
+      ? { $pull: { sameFeelings: userId } } 
+      : { $addToSet: { sameFeelings: userId } };
 
-    if (wasAdded) {
-      await notifService.notifySameFeeling({
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id, 
+      updateOp, 
+      { new: true }
+    ).select('sameFeelings');
+
+    const newCount = updatedPost.sameFeelings.length;
+
+    if (!wasAdded) {
+      // Exécuté en arrière-plan (sans await bloquant pour le client si possible)
+      notifService.notifySameFeeling({
         postAuthorId: post.author,
         senderId: userId,
         postId: post._id,
-        count: post.sameFeelingsCount,
+        count: newCount,
       }).catch(() => {});
       
-      await checkCommunityBadges(userId, 'same_feeling').catch(() => {});
+      checkCommunityBadges(userId, 'same_feeling').catch(() => {});
     }
 
     res.json({
-      sameFeeling: wasAdded,
-      sameFeelingsCount: post.sameFeelingsCount,
+      sameFeeling: !wasAdded,
+      sameFeelingsCount: newCount,
     });
   } catch (err) { 
     console.error('❌ [SAME_FEELING] Erreur:', err);
@@ -324,7 +337,7 @@ exports.toggleSameFeeling = async (req, res, next) => {
   }
 };
 
-// ─── Réactions multiples (heart, hug, strong, fire) ───────────────────────────────
+// ─── Réactions multiples (CORRIGÉ AVEC ARRAYFILTERS) ─────────────────────────
 exports.toggleReaction = async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -334,46 +347,56 @@ exports.toggleReaction = async (req, res, next) => {
       return res.status(400).json({ error: `Type invalide. Valeurs: ${REACTION_TYPES.join(', ')}` });
     }
 
-    const post = await Post.findById(req.params.id);
-    
+    const post = await Post.findById(req.params.id).select('reactions isVisible author');
     if (!post || post.isVisible === false) {
       return res.status(404).json({ error: 'Post introuvable' });
     }
 
-    const existingIdx = post.reactions.findIndex(
-      r => r.user.toString() === userId.toString() && r.type === type
-    );
-
+    const existingReaction = post.reactions.find(r => r.user.toString() === userId.toString());
     let added = false;
-    
-    if (existingIdx !== -1) {
-      post.reactions.splice(existingIdx, 1);
+    let updatedPost;
+
+    if (!existingReaction) {
+      // Nouvelle réaction : on push atomiquement
+      updatedPost = await Post.findByIdAndUpdate(
+        req.params.id,
+        { $push: { reactions: { user: userId, type } } },
+        { new: true }
+      );
+      added = true;
+    } else if (existingReaction.type === type) {
+      // Clic sur la même réaction : on la retire atomiquement
+      updatedPost = await Post.findByIdAndUpdate(
+        req.params.id,
+        { $pull: { reactions: { user: userId } } },
+        { new: true }
+      );
     } else {
-      const otherIdx = post.reactions.findIndex(r => r.user.toString() === userId.toString());
-      if (otherIdx !== -1) post.reactions.splice(otherIdx, 1);
-      post.reactions.push({ user: userId, type });
+      // Changement de type (ex: heart -> fire) : on met à jour atomiquement
+      updatedPost = await Post.findByIdAndUpdate(
+        req.params.id,
+        { $set: { "reactions.$[elem].type": type } },
+        { arrayFilters: [{ "elem.user": userId }], new: true }
+      );
       added = true;
     }
-    
-    await post.save();
 
     const summary = REACTION_TYPES.map(t => ({
       type: t,
-      count: post.reactions.filter(r => r.type === t).length,
-      isMine: post.reactions.some(r => r.user.toString() === userId.toString() && r.type === t),
+      count: updatedPost.reactions.filter(r => r.type === t).length,
+      isMine: updatedPost.reactions.some(r => r.user.toString() === userId.toString() && r.type === t),
     })).filter(r => r.count > 0 || r.isMine);
 
     if (added) {
       const alias = req.user.anonymousAlias || '👤 Anonyme';
-      await notifService.notifyReaction({
+      notifService.notifyReaction({
         postAuthorId: post.author,
         senderId: userId,
         postId: post._id,
         reactionType: type,
         senderAlias: alias,
       }).catch(() => {});
-      
-      await checkCommunityBadges(userId, 'reaction').catch(() => {});
+      checkCommunityBadges(userId, 'reaction').catch(() => {});
     }
 
     res.json({ reactions: summary, myReaction: added ? type : null });

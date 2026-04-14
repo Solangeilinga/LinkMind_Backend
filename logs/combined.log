@@ -1,0 +1,325 @@
+2026-04-14T01:05:50.115Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:05:50 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:06:48 [INFO]: SIGINT received, shutting down gracefully... {"service":"linkmind-api"}
+2026-04-14T01:06:54.806Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:06:54 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:07:26 [INFO]: SIGINT received, shutting down gracefully... {"service":"linkmind-api"}
+2026-04-14T01:07:42.219Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:07:42 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:11:24.805Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:11:24 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:11:34.702Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:11:34 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:11:44.582Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:11:44 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:12:00.731Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:12:00 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:12:06.353Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:12:06 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:14:28.971Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:14:28 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:20:35.978Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:20:36 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:21:45 [INFO]: SIGINT received, shutting down gracefully... {"service":"linkmind-api"}
+2026-04-14T01:23:00.118Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:23:00 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:43:53.124Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:43:53 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T01:45:03.348Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:45:03 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:45:40 [INFO]: [32m✓[0m Connected to MongoDB {"service":"linkmind-api"}
+2026-04-14 01:45:40 [INFO]: [34mℹ[0m Starting indexes creation...
+ {"service":"linkmind-api"}
+2026-04-14 01:45:40 [INFO]: [34mℹ[0m Creating User indexes... {"service":"linkmind-api"}
+2026-04-14 01:45:40 [ERROR]: [31m✗[0m Index creation failed: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, unique: true, key: { email: 1 }, name: "email_1" }, existing index: { v: 2, unique: true, key: { email: 1 }, name: "email_1", sparse: true, background: true } {"service":"linkmind-api"}
+2026-04-14T01:51:21.406Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:51:21 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:51:46 [INFO]: [32m✓[0m Connected to MongoDB {"service":"linkmind-api"}
+2026-04-14 01:51:46 [INFO]: [34mℹ[0m Starting indexes creation...
+ {"service":"linkmind-api"}
+2026-04-14 01:51:46 [INFO]: [34mℹ[0m Creating User indexes... {"service":"linkmind-api"}
+2026-04-14 01:51:47 [ERROR]: [31m✗[0m Index creation failed: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, unique: true, key: { email: 1 }, name: "email_1" }, existing index: { v: 2, unique: true, key: { email: 1 }, name: "email_1", sparse: true, background: true } {"service":"linkmind-api"}
+2026-04-14T01:54:47.186Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 01:54:47 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 01:54:58 [INFO]: [32m✓[0m Connected to MongoDB {"service":"linkmind-api"}
+2026-04-14 01:54:58 [INFO]: [34mℹ[0m Starting indexes creation...
+ {"service":"linkmind-api"}
+2026-04-14 01:54:58 [INFO]: [34mℹ[0m Creating User indexes... {"service":"linkmind-api"}
+2026-04-14 01:54:58 [INFO]: [34mℹ[0m Index email_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 01:55:02 [INFO]: [32m✓[0m Index phoneNumber_1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:02 [INFO]: [34mℹ[0m Index level_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [32m✓[0m Index accountStatus_1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [34mℹ[0m Index createdAt_-1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [32m✓[0m Index pointsHistory_1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [32m✓[0m User indexes done
+ {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [34mℹ[0m Creating Mood indexes... {"service":"linkmind-api"}
+2026-04-14 01:55:04 [INFO]: [32m✓[0m Index user_1_createdAt_-1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:05 [INFO]: [34mℹ[0m Index score_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 01:55:05 [INFO]: [34mℹ[0m Index label_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 01:55:05 [INFO]: [32m✓[0m Index createdAt_-1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:05 [INFO]: [32m✓[0m Index factors_1 créé {"service":"linkmind-api"}
+2026-04-14 01:55:06 [INFO]: [32m✓[0m Index createdAt_1 créé {"service":"linkmind-api"}
+2026-04-14T02:00:43.338Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 02:00:43 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 02:01:36 [INFO]: [32m✓[0m Connected to MongoDB {"service":"linkmind-api"}
+2026-04-14 02:01:36 [INFO]: [34mℹ[0m Starting indexes creation...
+ {"service":"linkmind-api"}
+2026-04-14 02:01:36 [INFO]: [34mℹ[0m Creating User indexes... {"service":"linkmind-api"}
+2026-04-14 02:01:38 [INFO]: [34mℹ[0m Index email_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:17 [INFO]: [34mℹ[0m Index phoneNumber_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:20 [INFO]: [34mℹ[0m Index level_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:21 [INFO]: [34mℹ[0m Index accountStatus_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:22 [INFO]: [34mℹ[0m Index createdAt_-1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:22 [INFO]: [34mℹ[0m Index pointsHistory_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:22 [INFO]: [32m✓[0m User indexes done
+ {"service":"linkmind-api"}
+2026-04-14 02:02:22 [INFO]: [34mℹ[0m Creating Mood indexes... {"service":"linkmind-api"}
+2026-04-14 02:02:23 [INFO]: [34mℹ[0m Index user_1_createdAt_-1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:23 [INFO]: [34mℹ[0m Index score_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:26 [INFO]: [34mℹ[0m Index label_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:27 [INFO]: [34mℹ[0m Index createdAt_-1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:29 [INFO]: [34mℹ[0m Index factors_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:31 [INFO]: [34mℹ[0m Index createdAt_1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:31 [INFO]: [32m✓[0m Mood indexes done
+ {"service":"linkmind-api"}
+2026-04-14 02:02:31 [WARN]: [33m⚠[0m Skipping Challenge indexes (model not loaded or invalid) {"service":"linkmind-api"}
+2026-04-14 02:02:31 [WARN]: [33m⚠[0m Skipping Community indexes (model not loaded) {"service":"linkmind-api"}
+2026-04-14 02:02:31 [WARN]: [33m⚠[0m Skipping Content indexes (model not loaded) {"service":"linkmind-api"}
+2026-04-14 02:02:31 [INFO]: [34mℹ[0m Creating Notification indexes... {"service":"linkmind-api"}
+2026-04-14 02:02:34 [INFO]: [34mℹ[0m Index recipient_1_createdAt_-1 existe déjà, skip. {"service":"linkmind-api"}
+2026-04-14 02:02:40 [INFO]: [32m✓[0m Index read_1 créé {"service":"linkmind-api"}
+2026-04-14 02:02:47 [INFO]: [32m✓[0m Index type_1 créé {"service":"linkmind-api"}
+2026-04-14 02:03:03 [INFO]: [32m✓[0m Index createdAt_1 créé {"service":"linkmind-api"}
+2026-04-14 02:09:06 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776132546198-hk8k8dhap","method":"GET","path":"/api","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"}
+2026-04-14 02:09:06 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776132546198-hk8k8dhap","statusCode":"[REDACTED]","responseTime":"101ms"}
+2026-04-14 02:09:06 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776132546732-76mz5ukqs","method":"GET","path":"/favicon.ico","ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0"}
+2026-04-14 02:09:06 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776132546732-76mz5ukqs","statusCode":"[REDACTED]","responseTime":"1ms"}
+2026-04-14T02:18:07.564Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 02:18:07 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 02:20:36 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133236307-lhacz7nfr","method":"POST","path":"/api/auth/login","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133236307-lhacz7nfr","statusCode":"[REDACTED]","responseTime":"2175ms"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238733-73bh85pgd","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238768-puo6t8oj4","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238791-a48f5v25j","method":"GET","path":"/api/mood/today","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238803-1lu5qma2w","method":"GET","path":"/api/mood/history","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238817-jwhcupocw","method":"GET","path":"/api/mood/today","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133238841-ati33rkf6","method":"GET","path":"/api/mood/history","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238791-a48f5v25j","statusCode":"[REDACTED]","responseTime":"873ms"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238803-1lu5qma2w","statusCode":"[REDACTED]","responseTime":"869ms"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238817-jwhcupocw","statusCode":"[REDACTED]","responseTime":"862ms"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238841-ati33rkf6","statusCode":"[REDACTED]","responseTime":"892ms"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238733-73bh85pgd","statusCode":"[REDACTED]","responseTime":"1049ms"}
+2026-04-14 02:20:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133238768-puo6t8oj4","statusCode":"[REDACTED]","responseTime":"1040ms"}
+2026-04-14 02:21:47 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133307753-sb8zvf96h","method":"POST","path":"/api/users/accept-legal","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:48 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133307753-sb8zvf96h","statusCode":"[REDACTED]","responseTime":"819ms"}
+2026-04-14 02:21:48 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133308594-wxsnsrmh8","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:49 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133308594-wxsnsrmh8","statusCode":"[REDACTED]","responseTime":"933ms"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312015-uzkzh8ajt","method":"GET","path":"/api/content/daily-message","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312020-wveplhdc1","method":"GET","path":"/api/content/wellness-tips","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312027-michf95x8","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312034-9mb88365p","method":"GET","path":"/api/content/moods","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312043-gnhyf2dyn","method":"GET","path":"/api/content/professional-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312049-4lu5toki2","method":"GET","path":"/api/content/challenge-categories","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312057-vws4y3yrl","method":"GET","path":"/api/content/challenge-difficulties","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312064-ur87hhne3","method":"GET","path":"/api/content/post-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133312082-8tyxzphux","method":"GET","path":"/api/content/stress-factors","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312020-wveplhdc1","statusCode":"[REDACTED]","responseTime":"787ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312027-michf95x8","statusCode":"[REDACTED]","responseTime":"829ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312034-9mb88365p","statusCode":"[REDACTED]","responseTime":"828ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312049-4lu5toki2","statusCode":"[REDACTED]","responseTime":"820ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312064-ur87hhne3","statusCode":"[REDACTED]","responseTime":"826ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312043-gnhyf2dyn","statusCode":"[REDACTED]","responseTime":"863ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312082-8tyxzphux","statusCode":"[REDACTED]","responseTime":"839ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312057-vws4y3yrl","statusCode":"[REDACTED]","responseTime":"866ms"}
+2026-04-14 02:21:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133312015-uzkzh8ajt","statusCode":"[REDACTED]","responseTime":"968ms"}
+2026-04-14 02:22:17 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133337070-awf3558bc","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:17 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133337074-ifv3djnun","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:18 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:38\n    at Array.map (<anonymous>)\n    at exports.getFeed (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/feed?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:22:18 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133337070-awf3558bc","statusCode":"[REDACTED]","responseTime":"950ms"}
+2026-04-14 02:22:18 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:137:10\n    at Array.map (<anonymous>)\n    at exports.getMyPosts (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:136:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/my-posts?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:22:18 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133337074-ifv3djnun","statusCode":"[REDACTED]","responseTime":"1120ms"}
+2026-04-14 02:22:19 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133339413-hwiznvhzd","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:20 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133339413-hwiznvhzd","statusCode":"[REDACTED]","responseTime":"944ms"}
+2026-04-14 02:22:22 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133342211-p4502f3zn","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:23 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133342211-p4502f3zn","statusCode":"[REDACTED]","responseTime":"942ms"}
+2026-04-14 02:22:25 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133345659-a26ewwq1x","method":"GET","path":"/api/content/daily-message","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:25 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133345663-8xq98m1f5","method":"GET","path":"/api/content/wellness-tips","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:25 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133345668-1348a1izx","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:26 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133345668-1348a1izx","statusCode":"[REDACTED]","responseTime":"821ms"}
+2026-04-14 02:22:26 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133345663-8xq98m1f5","statusCode":"[REDACTED]","responseTime":"836ms"}
+2026-04-14 02:22:26 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133345659-a26ewwq1x","statusCode":"[REDACTED]","responseTime":"1012ms"}
+2026-04-14 02:22:29 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133349209-ksntoa2gv","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:30 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133349209-ksntoa2gv","statusCode":"[REDACTED]","responseTime":"850ms"}
+2026-04-14 02:22:31 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133351845-hxfb0pxfn","method":"POST","path":"/api/mood","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:33 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133351845-hxfb0pxfn","statusCode":"[REDACTED]","responseTime":"1760ms"}
+2026-04-14 02:22:33 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133353693-xnfgxcnvb","method":"GET","path":"/api/mood/history","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133353693-xnfgxcnvb","statusCode":"[REDACTED]","responseTime":"826ms"}
+2026-04-14 02:22:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133354794-me4flpmep","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133354802-kcvqg69l8","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133354802-kcvqg69l8","statusCode":"[REDACTED]","responseTime":"762ms"}
+2026-04-14 02:22:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133354794-me4flpmep","statusCode":"[REDACTED]","responseTime":"1104ms"}
+2026-04-14 02:22:42 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133362039-k1a7f6m5e","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:42 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133362054-apffuukhg","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:42 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:38\n    at Array.map (<anonymous>)\n    at exports.getFeed (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/feed?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:22:42 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133362039-k1a7f6m5e","statusCode":"[REDACTED]","responseTime":"941ms"}
+2026-04-14 02:22:43 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:137:10\n    at Array.map (<anonymous>)\n    at exports.getMyPosts (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:136:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/my-posts?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:22:43 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133362054-apffuukhg","statusCode":"[REDACTED]","responseTime":"1071ms"}
+2026-04-14 02:22:44 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133364024-inj5upuvo","method":"GET","path":"/api/professionals","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:44 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133364037-igfe2kz1p","method":"GET","path":"/api/professionals/bookings/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:45 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133364037-igfe2kz1p","statusCode":"[REDACTED]","responseTime":"1020ms"}
+2026-04-14 02:22:45 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133364024-inj5upuvo","statusCode":"[REDACTED]","responseTime":"1092ms"}
+2026-04-14 02:22:48 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133368047-6fsf8vcx5","method":"DELETE","path":"/api/professionals/bookings/69d767e924b4358431bab09f","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:49 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133368047-6fsf8vcx5","statusCode":"[REDACTED]","responseTime":"969ms"}
+2026-04-14 02:22:49 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133369048-eeqhentx9","method":"GET","path":"/api/professionals/bookings/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:49 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133369048-eeqhentx9","statusCode":"[REDACTED]","responseTime":"934ms"}
+2026-04-14 02:22:51 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133371495-2myf9q3eh","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:22:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133371495-2myf9q3eh","statusCode":"[REDACTED]","responseTime":"931ms"}
+2026-04-14T02:24:34.253Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 02:24:34 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 02:24:43 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133483132-k8njmz66n","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:24:43 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133483157-li6ceiveu","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:24:44 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:38\n    at Array.map (<anonymous>)\n    at exports.getFeed (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/feed?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:24:44 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133483132-k8njmz66n","statusCode":"[REDACTED]","responseTime":"1022ms"}
+2026-04-14 02:24:44 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:137:10\n    at Array.map (<anonymous>)\n    at exports.getMyPosts (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:136:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/my-posts?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:24:44 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133483157-li6ceiveu","statusCode":"[REDACTED]","responseTime":"1143ms"}
+2026-04-14 02:24:48 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133488467-ev3b233q6","method":"POST","path":"/api/community/posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:24:51 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133488467-ev3b233q6","statusCode":"[REDACTED]","responseTime":"1598ms"}
+2026-04-14 02:24:51 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133491565-grxf30qne","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:24:51 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133491572-tonvgf56w","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:24:52 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:38\n    at Array.map (<anonymous>)\n    at exports.getFeed (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:90:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/feed?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:24:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133491565-grxf30qne","statusCode":"[REDACTED]","responseTime":"956ms"}
+2026-04-14 02:24:52 [ERROR]: post.toObject is not a function {"service":"linkmind-api","stack":"TypeError: post.toObject is not a function\n    at serializePost (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:47:20)\n    at C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:137:10\n    at Array.map (<anonymous>)\n    at exports.getMyPosts (C:\\Users\\solan\\OneDrive\\Bureau\\linkmind\\backend\\src\\controllers\\community.controller.js:136:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","url":"/api/community/my-posts?page=1","method":"GET","ip":"::ffff:10.168.230.181","userId":{"buffer":{"0":105,"1":197,"2":113,"3":232,"4":75,"5":205,"6":130,"7":180,"8":245,"9":211,"10":115,"11":132}}}
+2026-04-14 02:24:52 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133491572-tonvgf56w","statusCode":"[REDACTED]","responseTime":"1140ms"}
+2026-04-14T02:26:50.294Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 02:26:50 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 02:28:11 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133691270-ttqj93x1f","method":"GET","path":"/api/professionals","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:28:11 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133691358-lvjx004tn","method":"GET","path":"/api/professionals/bookings/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:28:12 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133691358-lvjx004tn","statusCode":"[REDACTED]","responseTime":"984ms"}
+2026-04-14 02:28:12 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133691270-ttqj93x1f","statusCode":"[REDACTED]","responseTime":"1231ms"}
+2026-04-14 02:28:15 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133695356-fzp9ro016","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:28:16 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133695356-fzp9ro016","statusCode":"[REDACTED]","responseTime":"1003ms"}
+2026-04-14 02:28:19 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133699599-58hhvkrwc","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:28:20 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133699599-58hhvkrwc","statusCode":"[REDACTED]","responseTime":"1017ms"}
+2026-04-14T02:31:06.641Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 02:31:06 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14 02:31:16 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133876633-oxw3ykkk2","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:17 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133876633-oxw3ykkk2","statusCode":"[REDACTED]","responseTime":"971ms"}
+2026-04-14 02:31:19 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133879924-r9wg48dgu","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:20 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133880750-8hk6i8o2h","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:20 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133880759-ejuluikja","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:20 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133879924-r9wg48dgu","statusCode":"[REDACTED]","responseTime":"963ms"}
+2026-04-14 02:31:21 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133880759-ejuluikja","statusCode":"[REDACTED]","responseTime":"1177ms"}
+2026-04-14 02:31:21 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133880750-8hk6i8o2h","statusCode":"[REDACTED]","responseTime":"1197ms"}
+2026-04-14 02:31:23 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133883946-cffptzzif","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:24 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133883946-cffptzzif","statusCode":"[REDACTED]","responseTime":"814ms"}
+2026-04-14 02:31:28 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133888307-06192if9u","method":"POST","path":"/api/community/posts/69c571604bcd82b4f5d37356/same-feeling","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:29 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133888307-06192if9u","statusCode":"[REDACTED]","responseTime":"973ms"}
+2026-04-14 02:31:29 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133889457-p0qkm6rbi","method":"POST","path":"/api/community/posts/69c571604bcd82b4f5d37356/like","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:30 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133889457-p0qkm6rbi","statusCode":"[REDACTED]","responseTime":"1302ms"}
+2026-04-14 02:31:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133894542-nzc6l4jwd","method":"POST","path":"/api/community/posts/69c571304bcd82b4f5d37340/like","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:35 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133895703-kgzz01mdk","method":"POST","path":"/api/community/posts/69c571604bcd82b4f5d37356/like","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133894542-nzc6l4jwd","statusCode":"[REDACTED]","responseTime":"1314ms"}
+2026-04-14 02:31:37 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133895703-kgzz01mdk","statusCode":"[REDACTED]","responseTime":"1372ms"}
+2026-04-14 02:31:38 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133898210-abmr44esi","method":"POST","path":"/api/community/posts/69bd8a9e78f61e24e298011c/same-feeling","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:39 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133898210-abmr44esi","statusCode":"[REDACTED]","responseTime":"1010ms"}
+2026-04-14 02:31:44 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133904329-c013me5jr","method":"GET","path":"/api/community/posts/69c571304bcd82b4f5d37340/comments","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:45 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133904329-c013me5jr","statusCode":"[REDACTED]","responseTime":"1021ms"}
+2026-04-14 02:31:49 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133909506-86nwy5sh9","method":"POST","path":"/api/community/posts/69c571304bcd82b4f5d37340/comments","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:51 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133909506-86nwy5sh9","statusCode":"[REDACTED]","responseTime":"2267ms"}
+2026-04-14 02:31:53 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133913648-hgcfvw0la","method":"POST","path":"/api/community/posts/69c571304bcd82b4f5d37340/comments/69dda7168e3638fe1c974bb5/like","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:54 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133913648-hgcfvw0la","statusCode":"[REDACTED]","responseTime":"1031ms"}
+2026-04-14 02:31:55 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133915020-q3mw3bhmw","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:55 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133915020-q3mw3bhmw","statusCode":"[REDACTED]","responseTime":"846ms"}
+2026-04-14 02:31:57 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133917220-9y8m5fvfe","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:31:58 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133917220-9y8m5fvfe","statusCode":"[REDACTED]","responseTime":"1146ms"}
+2026-04-14 02:32:10 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133930500-38tqjs1w1","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:32:11 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133930500-38tqjs1w1","statusCode":"[REDACTED]","responseTime":"987ms"}
+2026-04-14 02:32:13 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133933422-7ro833rsg","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:32:13 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133933430-tnvjxnxh1","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:32:14 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133933422-7ro833rsg","statusCode":"[REDACTED]","responseTime":"1156ms"}
+2026-04-14 02:32:14 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133933430-tnvjxnxh1","statusCode":"[REDACTED]","responseTime":"1252ms"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984403-76c7sfiyj","method":"GET","path":"/api/content/daily-message","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984407-urnb4jcpc","method":"GET","path":"/api/content/wellness-tips","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984409-rnzl3ltzd","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984413-bxc88id0a","method":"GET","path":"/api/content/moods","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984419-2ycgjx6e0","method":"GET","path":"/api/content/professional-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984421-awugn6opy","method":"GET","path":"/api/content/challenge-categories","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984424-kp4rc8pq8","method":"GET","path":"/api/content/challenge-difficulties","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984426-6c6fbpme2","method":"GET","path":"/api/content/post-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:04 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133984429-admnc61is","method":"GET","path":"/api/content/stress-factors","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984413-bxc88id0a","statusCode":"[REDACTED]","responseTime":"783ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984409-rnzl3ltzd","statusCode":"[REDACTED]","responseTime":"791ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984421-awugn6opy","statusCode":"[REDACTED]","responseTime":"781ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984424-kp4rc8pq8","statusCode":"[REDACTED]","responseTime":"798ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984407-urnb4jcpc","statusCode":"[REDACTED]","responseTime":"827ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984419-2ycgjx6e0","statusCode":"[REDACTED]","responseTime":"817ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984426-6c6fbpme2","statusCode":"[REDACTED]","responseTime":"823ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984429-admnc61is","statusCode":"[REDACTED]","responseTime":"870ms"}
+2026-04-14 02:33:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133984403-76c7sfiyj","statusCode":"[REDACTED]","responseTime":"964ms"}
+2026-04-14 02:33:10 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133990510-0lqr9alxu","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:11 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133990510-0lqr9alxu","statusCode":"[REDACTED]","responseTime":"941ms"}
+2026-04-14 02:33:11 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133991924-2stz9hzv7","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:11 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133991930-fd21iitb6","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:13 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133991924-2stz9hzv7","statusCode":"[REDACTED]","responseTime":"1092ms"}
+2026-04-14 02:33:13 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133991930-fd21iitb6","statusCode":"[REDACTED]","responseTime":"1110ms"}
+2026-04-14 02:33:18 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776133998334-d5ep7zrfy","method":"DELETE","path":"/api/community/posts/69dda572a6d280acadf7b488","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:19 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776133998334-d5ep7zrfy","statusCode":"[REDACTED]","responseTime":"965ms"}
+2026-04-14 02:33:22 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134002684-d6pjs5ply","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:23 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134002684-d6pjs5ply","statusCode":"[REDACTED]","responseTime":"1146ms"}
+2026-04-14 02:33:27 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134007231-u4mx7mlap","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:28 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134007231-u4mx7mlap","statusCode":"[REDACTED]","responseTime":"787ms"}
+2026-04-14 02:33:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134014764-9m0ojq496","method":"DELETE","path":"/api/community/posts/69d7bd775845fd3503210e2c","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134014764-9m0ojq496","statusCode":"[REDACTED]","responseTime":"954ms"}
+2026-04-14 02:33:41 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134021933-1j2mtk8e5","method":"POST","path":"/api/community/posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:43 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134021933-1j2mtk8e5","statusCode":"[REDACTED]","responseTime":"1578ms"}
+2026-04-14 02:33:43 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134023624-r46if7nqu","method":"GET","path":"/api/community/feed","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:43 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134023627-3zlxoo7qt","method":"GET","path":"/api/community/my-posts","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:33:44 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134023627-3zlxoo7qt","statusCode":"[REDACTED]","responseTime":"1103ms"}
+2026-04-14 02:33:44 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134023624-r46if7nqu","statusCode":"[REDACTED]","responseTime":"1110ms"}
+2026-04-14 02:34:12 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134052407-xp41a3dly","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:13 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134052407-xp41a3dly","statusCode":"[REDACTED]","responseTime":"954ms"}
+2026-04-14 02:34:30 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134070808-onijz8nkj","method":"PATCH","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:31 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134070808-onijz8nkj","statusCode":"[REDACTED]","responseTime":"1013ms"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074113-tixlfl6ad","method":"GET","path":"/api/content/daily-message","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074119-4jqjtauw9","method":"GET","path":"/api/content/wellness-tips","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074126-k74xdi1sc","method":"GET","path":"/api/ads","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074131-7e00xx7l0","method":"GET","path":"/api/content/moods","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074137-uh5pfbhwn","method":"GET","path":"/api/content/professional-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074143-shc5sn5ji","method":"GET","path":"/api/content/stress-factors","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074150-q3gnkmzrm","method":"GET","path":"/api/content/challenge-categories","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074158-uk39ytpe1","method":"GET","path":"/api/content/challenge-difficulties","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134074164-8wgmwilo0","method":"GET","path":"/api/content/post-types","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074131-7e00xx7l0","statusCode":"[REDACTED]","responseTime":"794ms"}
+2026-04-14 02:34:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074119-4jqjtauw9","statusCode":"[REDACTED]","responseTime":"829ms"}
+2026-04-14 02:34:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074164-8wgmwilo0","statusCode":"[REDACTED]","responseTime":"807ms"}
+2026-04-14 02:34:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074126-k74xdi1sc","statusCode":"[REDACTED]","responseTime":"848ms"}
+2026-04-14 02:34:34 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074143-shc5sn5ji","statusCode":"[REDACTED]","responseTime":"844ms"}
+2026-04-14 02:34:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074150-q3gnkmzrm","statusCode":"[REDACTED]","responseTime":"864ms"}
+2026-04-14 02:34:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074137-uh5pfbhwn","statusCode":"[REDACTED]","responseTime":"885ms"}
+2026-04-14 02:34:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074158-uk39ytpe1","statusCode":"[REDACTED]","responseTime":"874ms"}
+2026-04-14 02:34:35 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134074113-tixlfl6ad","statusCode":"[REDACTED]","responseTime":"1033ms"}
+2026-04-14 02:34:35 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134075943-2m4js0nej","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:34:36 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134075943-2m4js0nej","statusCode":"[REDACTED]","responseTime":"980ms"}
+2026-04-14 02:40:28 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134428233-mrpji2swt","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:40:29 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134428233-mrpji2swt","statusCode":"[REDACTED]","responseTime":"1145ms"}
+2026-04-14 02:40:36 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134436085-yfwsvale4","method":"POST","path":"/api/auth/logout","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:40:36 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134436085-yfwsvale4","statusCode":"[REDACTED]","responseTime":"351ms"}
+2026-04-14 02:40:36 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134436574-gucvk2epi","method":"GET","path":"/api/challenges/daily","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:40:36 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134436574-gucvk2epi","statusCode":"[REDACTED]","responseTime":"0ms"}
+2026-04-14 02:40:36 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134436578-km5nn979r","method":"GET","path":"/api/mood/today","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:40:36 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134436578-km5nn979r","statusCode":"[REDACTED]","responseTime":"0ms"}
+2026-04-14 02:40:36 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134436584-fkzyjbyt2","method":"GET","path":"/api/mood/history","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:40:36 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134436584-fkzyjbyt2","statusCode":"[REDACTED]","responseTime":"0ms"}
+2026-04-14 02:40:57 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134457528-ry6ptf4ze","method":"POST","path":"/api/auth/forgot-password","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:41:00 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134457528-ry6ptf4ze","statusCode":"[REDACTED]","responseTime":"2998ms"}
+2026-04-14 02:41:05 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134465123-mx3o7st35","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:41:05 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134465123-mx3o7st35","statusCode":"[REDACTED]","responseTime":"0ms"}
+2026-04-14 02:41:24 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134484263-6x0punqe8","method":"GET","path":"/api/users/me","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:41:24 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134484263-6x0punqe8","statusCode":"[REDACTED]","responseTime":"0ms"}
+2026-04-14 02:41:30 [INFO]: Incoming request {"service":"linkmind-api","requestId":"1776134490936-jw4n7kcf0","method":"POST","path":"/api/auth/verify-otp","ip":"::ffff:10.168.230.181","userAgent":"Dart/3.11 (dart:io)"}
+2026-04-14 02:41:31 [INFO]: Response sent {"service":"linkmind-api","requestId":"1776134490936-jw4n7kcf0","statusCode":"[REDACTED]","responseTime":"488ms"}
+2026-04-14T08:32:15.287Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 08:32:15 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-14T16:42:19.083Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
+2026-04-14 16:42:19 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}

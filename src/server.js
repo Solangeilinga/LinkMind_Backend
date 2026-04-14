@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
+const path = require('path');
+const fs = require('fs');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const path = require('path'); // ✅ AJOUTER
+
+// Database & Config
 const connectDB = require('./config/database');
 
+// Routes
 const authRoutes = require('./routes/auth.routes');
 const moodRoutes = require('./routes/mood.routes');
 const challengeRoutes = require('./routes/challenge.routes');
@@ -17,53 +19,102 @@ const notificationRoutes = require('./routes/notification.routes');
 const assistantRoutes = require('./routes/assistant.routes');
 const professionalRoutes = require('./routes/professional.routes');
 const adRoutes = require('./routes/ad.routes');
-const uploadRoutes = require('./routes/upload.routes'); // ✅ AJOUTER
+const uploadRoutes = require('./routes/upload.routes');
 
-const errorHandler = require('./middleware/errorHandler');
-const { scheduleDailyChallenge } = require('./services/scheduler.service');
+// Middleware
+const { errorHandler, AppError } = require('./utils/errors');
 const { authenticate } = require('./middleware/auth.middleware');
 const { checkSessionTimeout } = require('./middleware/session.middleware');
-const { applyRateLimit } = require('./middleware/rate-limit.middleware');
 const { requireLegalAccepted } = require('./middleware/legal.middleware');
+const {
+  securityHeaders,
+  customSecurityHeaders,
+  corsValidation,
+  sanitizeRequest,
+  securityChecks,
+  requestIdMiddleware,
+} = require('./middleware/security.middleware');
+const {
+  authLimiter,
+  apiLimiter,
+} = require('./middleware/advanced-rate-limit');
+
+// Logger
+const logger = require('./utils/logger');
+
+// Services
+const { scheduleDailyChallenge } = require('./services/scheduler.service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Verify critical configuration
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your_super_secret_jwt_key_change_in_production') {
+  logger.error('🔴 CRITICAL: JWT_SECRET not properly configured');
+  throw new Error('JWT_SECRET must be set to a secure value');
+}
+
+if (!process.env.FRONTEND_URL) {
+  logger.error('🔴 CRITICAL: FRONTEND_URL not configured');
+  throw new Error('FRONTEND_URL must be configured');
+}
+
 // Connect to database
 connectDB();
 
-// ─── Security middleware ─────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
+// ─────── SECURITY MIDDLEWARE STACK ──────────────────────────────────────────
+// 1. Security Headers
+app.use(securityHeaders);
+app.use(customSecurityHeaders);
+
+// 2. Request Logging & ID
+app.use(requestIdMiddleware);
+
+// 3. CORS Configuration Rigoreuse
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(o => o.trim());
+    
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS blocked', { origin, time: new Date().toISOString() });
+      callback(new Error('CORS policy: origin not allowed'));
+    }
   },
-}));
-
-// CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
   credentials: true,
-}));
+  maxAge: 86400,
+  preflightContinue: false,
+};
 
-// Body parsing
+app.use(cors(corsOptions));
+
+// 4. Body Parsing with Limits
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging
+// 5. Request Sanitization
+app.use(sanitizeRequest);
+app.use(securityChecks);
+
+// 6. HTTP Method Override (for compatibility)
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.body._method) {
+    req.method = req.body._method.toUpperCase();
+    delete req.body._method;
+  }
+  next();
+});
+
+// 7. Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-// ─── ✅ SERVIR LES FICHIERS STATIQUES (avatars) ───────────────────────────────
+// ─────── STATIC FILES ──────────────────────────────────────────────────────────
 // Créer le dossier uploads s'il n'existe pas
-const fs = require('fs');
 const uploadsDir = path.join(__dirname, 'uploads');
 const avatarsDir = path.join(uploadsDir, 'avatars');
 
@@ -71,45 +122,47 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true });
 
 // Servir les fichiers statiques
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  etag: true,
+  maxAge: 86400000, // 1 day
+}));
 
-// ─── Rate limiting global ──────────────────────────────────────────────────────
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', globalLimiter);
-
-// ─── Routes PUBLIQUES ─────────────────────────────────────────────────────────
+// ─────── HEALTH CHECK ENDPOINT ──────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString(), app: 'LinkMind API' });
+  res.json({
+    status: 'OK',
+    app: 'LinkMind API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    uptime: process.uptime(),
+  });
 });
 
+// ─────── PUBLIC ROUTES ──────────────────────────────────────────────────────────
+app.post('/api/auth/register', authLimiter, authRoutes);
+app.post('/api/auth/login', authLimiter, authRoutes);
 app.use('/api/auth', authRoutes);
 
-// ─── Routes d'upload (publiques pour l'upload, mais avec auth à l'intérieur) ───
+// Upload routes (with auth middleware inside)
 app.use('/api/upload', uploadRoutes);
 
-// ─── Middleware d'authentification ────────────────────────────────────────────
-app.use('/api/mood', authenticate);
-app.use('/api/challenges', authenticate);
-app.use('/api/community', authenticate);
-app.use('/api/professionals', authenticate);
-app.use('/api/ads', authenticate);
-app.use('/api/users', authenticate);
-app.use('/api/content', authenticate);
-app.use('/api/notifications', authenticate);
-app.use('/api/assistant', authenticate);
+// ─────── RATE LIMITING FOR API ──────────────────────────────────────────────────
+app.use('/api/', apiLimiter);
 
-// ─── Middlewares de sécurité APRÈS authentification ───────────────────────────
-app.use(checkSessionTimeout);
-app.use(applyRateLimit);
-app.use(requireLegalAccepted);
+// ─────── AUTHENTICATION & SESSION MIDDLEWARE ────────────────────────────────────
+// All routes below this require authentication
+app.use('/api/mood', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/challenges', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/community', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/professionals', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/ads', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/users', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/content', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/notifications', authenticate, checkSessionTimeout, requireLegalAccepted);
+app.use('/api/assistant', authenticate, checkSessionTimeout, requireLegalAccepted);
 
-// ─── Routes PROTÉGÉES ──────────────────────────────────────────────────────────
+// ─────── PROTECTED ROUTES ──────────────────────────────────────────────────────
 app.use('/api/mood', moodRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/community', communityRoutes);
@@ -120,41 +173,68 @@ app.use('/api/content', contentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/assistant', assistantRoutes);
 
-// ─── 404 handler ───────────────────────────────────────────────────────────────
+// ─────── 404 NOT FOUND HANDLER ──────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    error: 'Route not found',
+    code: 'NOT_FOUND',
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// ─── Global error handler ──────────────────────────────────────────────────────
+// ─────── GLOBAL ERROR HANDLER (MUST BE LAST) ────────────────────────────────────
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🧠 LinkMind API running on port ${PORT}`);
+// ─────── SERVER STARTUP ────────────────────────────────────────────────────────
+const server = app.listen(PORT, () => {
+  logger.info('🧠 LinkMind API started', {
+    port: PORT,
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`🧠 LinkMind API running on port ${PORT}`);
+  console.log(`${'='.repeat(60)}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Health: http://localhost:${PORT}/health`);
-  console.log(`📁 Uploads: http://localhost:${PORT}/uploads/\n`);
-  console.log('✅ Routes montées :');
-  console.log('   - /api/auth (public)');
-  console.log('   - /api/upload (avatar upload)');
-  console.log('   - /api/mood');
-  console.log('   - /api/challenges');
-  console.log('   - /api/community');
-  console.log('   - /api/professionals');
-  console.log('   - /api/ads');
-  console.log('   - /api/users');
-  console.log('   - /api/content');
-  console.log('   - /api/notifications');
-  console.log('   - /api/assistant');
-  console.log('   - /uploads (static files)\n');
-  console.log('🔒 Sécurité activée :');
-  console.log('   - Session timeout (60 min)');
-  console.log('   - Rate limiting (100 requêtes/15min)');
-  console.log('   - Brute force protection (5 tentatives login)');
-  console.log('   - Détection comportements suspects\n');
+  console.log(`📂 Uploads: http://localhost:${PORT}/uploads/`);
+  console.log(`${'='.repeat(60)}`);
+  console.log('✅ Security Features Activated:');
+  console.log('   ✓ Helmet.js (Security Headers)');
+  console.log('   ✓ CORS (Strict Whitelist)');
+  console.log('   ✓ Rate Limiting (Auth + API)');
+  console.log('   ✓ Input Sanitization');
+  console.log('   ✓ Request Logging');
+  console.log('   ✓ Error Handler');
+  console.log(`${'='.repeat(60)}\n`);
+
+  // Schedule daily challenges
+  try {
+    scheduleDailyChallenge();
+    logger.info('Daily challenge scheduler started');
+  } catch (error) {
+    logger.error('Failed to start daily challenge scheduler', { error: error.message });
+  }
 });
 
-// Start cron scheduler
-scheduleDailyChallenge();
+// Graceful Shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    logger.info('Server shut down');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    logger.info('Server shut down');
+    process.exit(0);
+  });
+});
 
 module.exports = app;
