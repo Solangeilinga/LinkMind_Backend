@@ -10,13 +10,14 @@ const SMTP_CONFIG = {
     pass: process.env.SMTP_PASS,
   },
   // Timeout et retry
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 };
 
 // Cache du transporter
 let transporter = null;
+let connectionVerified = false;
 
 const getTransporter = () => {
   if (!transporter) {
@@ -27,6 +28,29 @@ const getTransporter = () => {
     transporter = nodemailer.createTransport(SMTP_CONFIG);
   }
   return transporter;
+};
+
+// ─── Vérification de connexion SMTP ───────────────────────────────────────────
+const verifyConnection = async () => {
+  const transporter = getTransporter();
+  if (!transporter) return false;
+  
+  try {
+    await transporter.verify();
+    console.log('✅ [EMAIL] Connexion SMTP établie');
+    connectionVerified = true;
+    return true;
+  } catch (err) {
+    console.error('❌ [EMAIL] Échec connexion SMTP:', err.message);
+    console.error('📧 [EMAIL] Détails config:', {
+      host: SMTP_CONFIG.host,
+      port: SMTP_CONFIG.port,
+      user: SMTP_CONFIG.auth.user ? `${SMTP_CONFIG.auth.user.substring(0, 5)}...` : 'undefined',
+      hasPass: !!SMTP_CONFIG.auth.pass,
+    });
+    connectionVerified = false;
+    return false;
+  }
 };
 
 // ─── Template de base amélioré ─────────────────────────────────────────────────
@@ -70,23 +94,9 @@ const baseTemplate = (content) => `
 </html>
 `;
 
-// ─── Vérification de connexion SMTP ───────────────────────────────────────────
-const verifyConnection = async () => {
-  const transporter = getTransporter();
-  if (!transporter) return false;
-  
-  try {
-    await transporter.verify();
-    console.log('✅ [EMAIL] Connexion SMTP établie');
-    return true;
-  } catch (err) {
-    console.error('❌ [EMAIL] Échec connexion SMTP:', err.message);
-    return false;
-  }
-};
-
 // ─── Envoi générique avec retry ────────────────────────────────────────────────
-const sendEmail = async ({ to, subject, html }, retries = 2) => {
+const sendEmail = async ({ to, subject, html }, retries = 3) => {
+  // Mode développement : simuler l'envoi
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log(`📧 [DEV - Email non configuré] To: ${to} | Subject: ${subject}`);
     console.log(`📧 [DEV] Contenu simulé: ${html.substring(0, 200)}...`);
@@ -99,11 +109,10 @@ const sendEmail = async ({ to, subject, html }, retries = 2) => {
   }
 
   console.log(`📧 [EMAIL] Envoi à ${to}...`);
-  console.log(`📧 [EMAIL] SMTP: ${SMTP_CONFIG.host}:${SMTP_CONFIG.port}`);
 
   try {
     const info = await transporter.sendMail({
-      from: `"LinkMind" <${process.env.SMTP_USER}>`,
+      from: `"LinkMind" <${SMTP_CONFIG.auth.user}>`,
       to,
       subject,
       html,
@@ -114,6 +123,14 @@ const sendEmail = async ({ to, subject, html }, retries = 2) => {
   } catch (err) {
     console.error(`❌ [EMAIL] Erreur (${retries} retry left):`, err.message);
     
+    // Si erreur d'authentification, ne pas réessayer
+    if (err.message.includes('Invalid login') || err.message.includes('535') || err.message.includes('Authentication')) {
+      console.error('❌ [EMAIL] Erreur d\'authentification - Vérifie SMTP_USER et SMTP_PASS');
+      console.error('📧 [EMAIL] Assure-toi d\'utiliser un MOT DE PASSE D\'APPLICATION Gmail (16 caractères)');
+      throw err;
+    }
+    
+    // Timeout ou erreur réseau : on réessaie
     if (retries > 0) {
       console.log(`🔄 [EMAIL] Nouvel essai dans 2 secondes...`);
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -217,7 +234,9 @@ const sendWelcomeEmail = async (to, name) => {
 // ─── Initialisation ───────────────────────────────────────────────────────────
 // Vérifier la connexion au démarrage (ne pas bloquer l'app)
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  verifyConnection().catch(console.warn);
+  setTimeout(() => {
+    verifyConnection().catch(console.warn);
+  }, 2000);
 }
 
 module.exports = {

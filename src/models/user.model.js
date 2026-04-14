@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: false,
-    // ✅ unique et sparse sont déplacés dans l'index explicite en bas
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
