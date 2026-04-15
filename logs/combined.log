@@ -323,3 +323,6 @@
 2026-04-14 08:32:15 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
 2026-04-14T16:42:19.083Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"development"}
 2026-04-14 16:42:19 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-15T08:38:46.815Z [INFO]: 🧠 LinkMind API started {"service":"linkmind-api","port":"3000","environment":"production"}
+2026-04-15 08:38:46 [INFO]: Daily challenge scheduler started {"service":"linkmind-api"}
+2026-04-15 08:38:56 [INFO]: SIGINT received, shutting down gracefully... {"service":"linkmind-api"}

@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const c = require('../controllers/community.controller');
 const { authenticate, requireAdmin } = require('../middleware/auth.middleware');
+const moderation = require('../controllers/moderation.controller'); 
 
 router.use(authenticate);
 
-// Routes de signalement (accessibles à tous)
-router.post('/posts/:id/report', c.reportPost);
-router.post('/comments/:id/report', c.reportComment);
-router.post('/professionals/:id/report', c.reportProfessional);
+// Routes de signalement (utilisant moderation.controller)
+router.post('/posts/:id/report', moderation.reportPost);
+router.post('/comments/:id/report', moderation.reportComment);
+router.post('/professionals/:id/report', moderation.reportProfessional);
 
 // Routes existantes...
 router.get('/feed', c.getFeed);
