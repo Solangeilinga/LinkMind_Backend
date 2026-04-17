@@ -80,6 +80,7 @@ const userSchema = new mongoose.Schema({
     reminderTime: { type: String, default: '20:00' },
     anonymousInCommunity: { type: Boolean, default: false },
     theme: { type: String, enum: ['light', 'dark', 'auto'], default: 'auto' },
+    goals: { type: [String], default: [] }, // objectifs sélectionnés à l'onboarding
   },
 
   // Auth
