@@ -97,6 +97,17 @@ const postTypeSchema = new mongoose.Schema({
   order:    { type: Number, default: 0 },
 }, { timestamps: true });
 
+// ─── Language ─────────────────────────────────────────────────────────────────
+const languageSchema = new mongoose.Schema({
+  code:      { type: String, required: true, unique: true, trim: true }, // 'fr', 'en', 'ar'…
+  label:     { type: String, required: true, trim: true },               // 'Français', 'English'…
+  nativeLabel: { type: String, trim: true },                             // label dans la langue elle-même
+  flag:      { type: String, default: '🏳️' },                           // emoji drapeau
+  isRTL:     { type: Boolean, default: false },                          // écriture droite → gauche
+  isActive:  { type: Boolean, default: true },
+  order:     { type: Number, default: 0 },
+}, { timestamps: true });
+
 // Exports
 module.exports = {
   Badge:               mongoose.model('Badge',               badgeSchema),
@@ -108,4 +119,5 @@ module.exports = {
   ChallengeCategory:   mongoose.model('ChallengeCategory',   challengeCategorySchema),
   ChallengeDifficulty: mongoose.model('ChallengeDifficulty', challengeDifficultySchema),
   PostType:            mongoose.model('PostType',            postTypeSchema),
+  Language:            mongoose.model('Language',            languageSchema),
 };

@@ -15,6 +15,10 @@ exports.logMood = async (req, res, next) => {
 
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
+    // Vérifier si une humeur existe déjà aujourd'hui avant l'upsert
+    const existingMood = await Mood.findOne({ user: userId, date: today }).select('_id').lean();
+    const isNew = !existingMood;
+
     // Upsert: update if already logged today
     const mood = await Mood.findOneAndUpdate(
       { user: userId, date: today },
@@ -25,7 +29,6 @@ exports.logMood = async (req, res, next) => {
     let newBadges = [];
 
     // Award points only on first log of the day
-    const isNew = mood.createdAt.toISOString() === mood.updatedAt.toISOString();
     if (isNew) {
       req.user.totalPoints += 10;
       req.user.updateStreak();

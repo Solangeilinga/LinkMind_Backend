@@ -23,6 +23,7 @@ const postSchema = new mongoose.Schema({
   }],
   commentsCount: { type: Number, default: 0 },
   isVisible:     { type: Boolean, default: true },
+  deletedAt:     { type: Date, default: null },
   reportCount:   { type: Number, default: 0 },
   reports: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

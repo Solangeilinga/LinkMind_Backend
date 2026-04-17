@@ -421,8 +421,12 @@ exports.deletePost = async (req, res, next) => {
     }
     
     post.isVisible = false;
+    post.deletedAt = new Date();
     await post.save();
-    
+
+    // Masquer aussi les commentaires du post
+    await Comment.updateMany({ post: post._id }, { isVisible: false });
+
     res.json({ message: 'Post supprimé', deleted: true });
   } catch (err) { 
     console.error('❌ [DELETE_POST] Erreur:', err);
@@ -562,29 +566,68 @@ exports.addComment = async (req, res, next) => {
 // ─── Like / unlike a comment ──────────────────────────────────────────────────────
 exports.toggleCommentLike = async (req, res, next) => {
   try {
-    const comment = await Comment.findById(req.params.commentId);
-    
+    const userId = req.user._id;
+    const { commentId } = req.params;
+
+    // Vérifier existence d'abord
+    const comment = await Comment.findById(commentId).select('likes isVisible');
     if (!comment || comment.isVisible === false) {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    const userId = req.user._id;
-    const idx = comment.likes.findIndex(id => id.toString() === userId.toString());
-    const wasLiked = idx === -1;
-    
-    if (wasLiked) {
-      comment.likes.push(userId);
-    } else {
-      comment.likes.splice(idx, 1);
+    const alreadyLiked = comment.likes.some(id => id.toString() === userId.toString());
+
+    // Mise à jour atomique (thread-safe) — même pattern que toggleLike sur les posts
+    const updateOp = alreadyLiked
+      ? { $pull: { likes: userId } }
+      : { $addToSet: { likes: userId } };
+
+    const updated = await Comment.findByIdAndUpdate(
+      commentId,
+      updateOp,
+      { new: true }
+    ).select('likes');
+
+    const likesCount = updated.likes.length;
+
+    // Synchroniser likesCount (champ dénormalisé)
+    await Comment.findByIdAndUpdate(commentId, { likesCount });
+
+    res.json({ liked: !alreadyLiked, likesCount });
+  } catch (err) {
+    console.error('❌ [TOGGLE_COMMENT_LIKE] Erreur:', err);
+    next(err);
+  }
+};
+
+// ─── Supprimer son propre commentaire (soft delete) ──────────────────────────────
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const userId = req.user._id.toString();
+    const comment = await Comment.findById(req.params.commentId);
+
+    if (!comment || comment.isVisible === false) {
+      return res.status(404).json({ error: 'Commentaire introuvable' });
     }
-    
-    comment.likesCount = comment.likes.length;
+
+    if (comment.author.toString() !== userId) {
+      return res.status(403).json({ error: 'Tu ne peux supprimer que tes propres commentaires' });
+    }
+
+    comment.isVisible = false;
     await comment.save();
 
-    res.json({ liked: wasLiked, likesCount: comment.likes.length });
-  } catch (err) { 
-    console.error('❌ [TOGGLE_COMMENT_LIKE] Erreur:', err);
-    next(err); 
+    // Décrémenter le compteur sur le post parent
+    if (!comment.parentComment) {
+      await Post.findByIdAndUpdate(comment.post, { $inc: { commentsCount: -1 } });
+    } else {
+      await Comment.findByIdAndUpdate(comment.parentComment, { $inc: { repliesCount: -1 } });
+    }
+
+    res.json({ message: 'Commentaire supprimé', deleted: true });
+  } catch (err) {
+    console.error('❌ [DELETE_COMMENT] Erreur:', err);
+    next(err);
   }
 };
 

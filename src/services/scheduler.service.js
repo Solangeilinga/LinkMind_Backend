@@ -20,13 +20,14 @@ exports.scheduleDailyChallenge = () => {
   cron.schedule('0 0 * * *', async () => {
     console.log('[CRON] Running daily streak check...');
     try {
+      // Utilisateurs qui n'ont pas loggé leur humeur hier ni aujourd'hui
       const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 2);
-      yesterday.setHours(23, 59, 59, 999);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
 
       await User.updateMany(
         {
-          lastActivityDate: { $lte: yesterday },
+          lastActivityDate: { $lt: yesterday },
           streakDays: { $gt: 0 },
         },
         { $set: { streakDays: 0 } }

@@ -46,12 +46,27 @@ router.get('/me', async (req, res, next) => {
 // ─── Mise à jour profil ────────────────────────────────────────────────────────
 router.patch('/me', async (req, res, next) => {
   try {
-    const allowed = ['name', 'firstName', 'lastName', 'preferences', 'anonymousAlias', 'phone', 'age', 'city', 'gender'];
+    const allowed = ['name', 'firstName', 'lastName', 'preferences', 'anonymousAlias', 'phone', 'age', 'city', 'gender', 'email'];
     const updates = {};
     
     allowed.forEach(field => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
+
+    // Validation et unicité email
+    if (updates.email !== undefined && updates.email !== null && updates.email !== '') {
+      const emailRegex = /^\S+@\S+\.\S+$/;
+      if (!emailRegex.test(updates.email)) {
+        return res.status(400).json({ error: 'Format email invalide' });
+      }
+      updates.email = updates.email.toLowerCase().trim();
+      const existing = await User.findOne({ email: updates.email, _id: { $ne: req.user._id } });
+      if (existing) {
+        return res.status(409).json({ error: 'Cet email est déjà utilisé par un autre compte.' });
+      }
+    } else if (updates.email === '' || updates.email === null) {
+      updates.email = null; // Permettre de supprimer l'email
+    }
     
     // Validation age
     if (updates.age !== undefined && (updates.age < 15 || updates.age > 120)) {

@@ -161,4 +161,40 @@ router.patch('/app-config/:key', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ─── Languages ────────────────────────────────────────────────────────────────
+const { Language } = require('../models/content.model');
+
+// GET /api/content/languages — liste des langues actives (public)
+router.get('/languages', async (req, res, next) => {
+  try {
+    const languages = await Language.find({ isActive: true })
+      .sort({ order: 1 })
+      .select('code label nativeLabel flag isRTL order');
+    res.json({ languages });
+  } catch (err) { next(err); }
+});
+
+// Admin CRUD langues
+router.post('/languages', requireAdmin, async (req, res, next) => {
+  try {
+    const language = await Language.create(req.body);
+    res.status(201).json({ language });
+  } catch (err) { next(err); }
+});
+
+router.patch('/languages/:id', requireAdmin, async (req, res, next) => {
+  try {
+    const language = await Language.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!language) return res.status(404).json({ error: 'Langue introuvable' });
+    res.json({ language });
+  } catch (err) { next(err); }
+});
+
+router.delete('/languages/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await Language.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
