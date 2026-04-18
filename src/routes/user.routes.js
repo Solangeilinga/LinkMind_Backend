@@ -12,10 +12,20 @@ router.use(authenticate);
 // ─── Acceptation des CGU ──────────────────────────────────────────────────────
 router.post('/accept-legal', async (req, res, next) => {
   try {
+    const user = await User.findById(req.user._id).select('legalAccepted legalAcceptedAt');
+    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    // Idempotent : si déjà accepté, renvoyer succès sans écraser la date initiale
+    if (user.legalAccepted === true) {
+      return res.json({ ok: true, acceptedAt: user.legalAcceptedAt, alreadyAccepted: true });
+    }
+
     await User.findByIdAndUpdate(req.user._id, {
-      legalAccepted: true,
-      legalAcceptedAt: new Date(),
-      legalVersion: '2025-01',
+      $set: {
+        legalAccepted: true,
+        legalAcceptedAt: new Date(),
+        legalVersion: '2025-01',
+      }
     });
     res.json({ ok: true, acceptedAt: new Date() });
   } catch (err) { 
