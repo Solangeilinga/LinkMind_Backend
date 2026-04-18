@@ -62,7 +62,24 @@ const serializePost = (post, userId) => {
   obj.isSameFeeling = (obj.sameFeelings || []).map(id => id.toString()).includes(userId);
   obj.sameFeelingsCount = (obj.sameFeelings || []).length;
   
-  obj.reactions = buildReactionSummary(obj.reactions || [], userId);
+  const reactionSummary = buildReactionSummary(obj.reactions || [], userId);
+  obj.reactions = reactionSummary;
+  
+  // Expose la réaction de l'utilisateur connecté pour l'overlay frontend
+  const myReaction = (obj.reactions || []).find(r => r.isMine);
+  obj.myReactionType = myReaction ? myReaction.type : null;
+  
+  // Si l'utilisateur a liké (ancien système) mais pas de réaction heart → ajouter heart
+  if (obj.isLiked && !obj.myReactionType) {
+    obj.myReactionType = 'heart';
+    // S'assurer que heart apparaît dans la summary
+    const heartReaction = reactionSummary.find(r => r.type === 'heart');
+    if (heartReaction) {
+      heartReaction.isMine = true;
+    } else {
+      reactionSummary.unshift({ type: 'heart', count: obj.likesCount, isMine: true });
+    }
+  }
   
   return obj;
 };
