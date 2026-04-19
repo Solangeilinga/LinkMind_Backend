@@ -35,6 +35,10 @@ const serializeUser = (user) => ({
   streakDays:  user.streakDays,
   isPremium:   user.isPremium,
   preferences: user.preferences,
+  legalAccepted: user.legalAccepted || false,
+  isEmailVerified: user.isEmailVerified || false,   // ← AJOUT
+  createdAt: user.createdAt,                       // optionnel mais utile
+  updatedAt: user.updatedAt,                       // optionnel
 });
 
 // POST /api/auth/register
