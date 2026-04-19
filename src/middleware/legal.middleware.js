@@ -1,22 +1,26 @@
-// src/middleware/legal.middleware.js
+// middleware/legal.middleware.js
 // Vérifie que l'utilisateur a accepté les CGU avant d'accéder aux routes protégées.
-// Routes exemptées : /auth/*, /users/accept-legal, /health
+// Exemptions : routes d'authentification, acceptation des CGU, health check.
 
 const EXEMPT_PATHS = [
-  '/api/auth',
-  '/api/users/accept-legal',
-  '/health',
+  '/api/auth',              // login, register, forgot-password, etc.
+  '/api/users/accept-legal', // point d'acceptation des CGU
+  '/health',                // health check public
 ];
 
 exports.requireLegalAccepted = (req, res, next) => {
-  // Pas d'user = route publique, on laisse passer
+  // 1. Si pas d'utilisateur (route publique), laisser passer
   if (!req.user) return next();
 
-  // Routes exemptées
-  const isExempt = EXEMPT_PATHS.some(p => req.path.startsWith(p));
+  // 2. Construire le chemin complet (supporte les sous-routeurs)
+  //    req.originalUrl contient toujours le chemin complet.
+  const fullPath = req.originalUrl || req.baseUrl + (req.path || '');
+
+  // 3. Vérifier si le chemin actuel est exempté
+  const isExempt = EXEMPT_PATHS.some(exemptPath => fullPath.startsWith(exemptPath));
   if (isExempt) return next();
 
-  // Vérifie l'acceptation
+  // 4. Sinon, exiger legalAccepted = true
   if (!req.user.legalAccepted) {
     return res.status(403).json({
       error: 'legal_not_accepted',
