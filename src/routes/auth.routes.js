@@ -7,7 +7,7 @@ const { authenticate } = require('../middleware/auth.middleware');
 const { body } = require('express-validator');
 const User = require('../models/user.model');
 const { sendVerificationEmail } = require('../services/email.service');
-const { sendOTP } = require('../services/sms.service'); // ✅ AJOUTER
+const { sendOTP } = require('../services/sms.service');
 
 // ─── Rate limiting (inchangé) ─────────────────────────────────────────────────
 const loginLimiter = rateLimit({
@@ -92,30 +92,27 @@ router.post('/send-verification', authenticate, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     
-    if (!user.email && !user.phone) {
+    // Déterminer quel canal doit être vérifié (priorité à l'email non vérifié)
+    let channel = null;
+    let destination = null;
+    
+    if (user.email && !user.isEmailVerified) {
+      channel = 'email';
+      destination = user.email;
+    } else if (user.phone && !user.isPhoneVerified) {
+      channel = 'sms';
+      destination = user.phone;
+    } else {
       return res.status(400).json({ 
-        error: 'Aucun moyen de contact pour la vérification. Ajoute un email ou un téléphone.' 
+        error: 'Aucune vérification nécessaire (tous les contacts sont déjà vérifiés).' 
       });
     }
     
-    if (user.isEmailVerified) {
-      return res.status(400).json({ error: 'Compte déjà vérifié' });
-    }
-    
-    // Anti-spam
+    // Anti-spam : 2 minutes entre deux envois
     if (user.otpExpires && user.otpExpires > new Date(Date.now() - 2 * 60 * 1000)) {
       return res.status(429).json({ 
         error: 'Un code a déjà été envoyé récemment. Attends 2 minutes.' 
       });
-    }
-    
-    // ✅ Déterminer le canal (priorité email si disponible)
-    let channel = 'email';
-    let destination = user.email;
-    
-    if (!destination && user.phone) {
-      channel = 'sms';
-      destination = user.phone;
     }
     
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -134,10 +131,19 @@ router.post('/send-verification', authenticate, async (req, res, next) => {
       console.log(`📱 [VERIFY] ${destination} → code: ${code}`);
     }
     
+    // Masquage de la destination pour l'affichage
+    let maskedDestination;
+    if (channel === 'email') {
+      maskedDestination = destination.replace(/(.{2})(.*)(@.*)/, '$2***$3');
+    } else {
+      const phoneStr = destination.toString();
+      maskedDestination = phoneStr.length > 4 ? `****${phoneStr.slice(-4)}` : phoneStr;
+    }
+    
     res.json({
       message: `Code envoyé par ${channel === 'email' ? 'email' : 'SMS'}`,
       channel,
-      destination: channel === 'email' ? user.email?.replace(/(.{2})(.*)(@.*)/, '$2***$3') : user.phone?.slice(-4),
+      destination: maskedDestination,
       expiresIn: 600,
       ...(process.env.NODE_ENV !== 'production' && { code }),
     });
@@ -157,12 +163,14 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
     }
     
     const user = await User.findById(req.user._id).select('+otp +otpExpires');
-    
     if (!user) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
     
-    if (user.isEmailVerified) {
+    // Vérifier si le compte est déjà complètement vérifié
+    const isEmailAlreadyVerified = user.email && user.isEmailVerified;
+    const isPhoneAlreadyVerified = user.phone && user.isPhoneVerified;
+    if (isEmailAlreadyVerified && (!user.phone || isPhoneAlreadyVerified)) {
       return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
     
@@ -174,8 +182,13 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'Code expiré. Demandes-en un nouveau.' });
     }
     
-    // ✅ Marquer le compte comme vérifié
-    user.isEmailVerified = true;
+    // Mettre à jour le champ correspondant au canal utilisé
+    if (user.otpChannel === 'email') {
+      user.isEmailVerified = true;
+    } else if (user.otpChannel === 'sms') {
+      user.isPhoneVerified = true;
+    }
+    
     user.otp = null;
     user.otpExpires = null;
     await user.save({ validateBeforeSave: false });
@@ -185,6 +198,7 @@ router.post('/verify-email', authenticate, async (req, res, next) => {
     res.json({ 
       message: 'Compte vérifié avec succès ✅', 
       verified: true,
+      channel: user.otpChannel,
     });
   } catch (err) { 
     console.error('❌ [VERIFY] Erreur:', err);
@@ -197,12 +211,20 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     
-    if (!user.email && !user.phone) {
-      return res.status(400).json({ error: 'Aucun moyen de contact pour la vérification.' });
-    }
+    // Déterminer quel canal doit être vérifié (priorité à l'email non vérifié)
+    let channel = null;
+    let destination = null;
     
-    if (user.isEmailVerified) {
-      return res.status(400).json({ error: 'Compte déjà vérifié' });
+    if (user.email && !user.isEmailVerified) {
+      channel = 'email';
+      destination = user.email;
+    } else if (user.phone && !user.isPhoneVerified) {
+      channel = 'sms';
+      destination = user.phone;
+    } else {
+      return res.status(400).json({ 
+        error: 'Aucune vérification nécessaire (tous les contacts sont déjà vérifiés).' 
+      });
     }
     
     const lastAttempt = user.lastVerificationSent;
@@ -210,15 +232,6 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
       return res.status(429).json({ 
         error: 'Veuillez attendre 1 minute avant de renvoyer un code.' 
       });
-    }
-    
-    // ✅ Déterminer le canal
-    let channel = 'email';
-    let destination = user.email;
-    
-    if (!destination && user.phone) {
-      channel = 'sms';
-      destination = user.phone;
     }
     
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -230,11 +243,11 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
     
     if (channel === 'email') {
       await sendVerificationEmail(destination, code);
+      console.log(`📧 [RESEND VERIFICATION] ${destination} → code: ${code}`);
     } else {
       await sendOTP(destination, code);
+      console.log(`📱 [RESEND VERIFICATION] ${destination} → code: ${code}`);
     }
-    
-    console.log(`📧 [RESEND VERIFICATION] ${destination} → code: ${code}`);
     
     res.json({
       message: `Nouveau code envoyé par ${channel === 'email' ? 'email' : 'SMS'}`,

@@ -139,10 +139,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ─────── PUBLIC ROUTES ──────────────────────────────────────────────────────────
-app.post('/api/auth/register', authLimiter, authRoutes);
-app.post('/api/auth/login', authLimiter, authRoutes);
-app.use('/api/auth', authRoutes);
+// ─────── PUBLIC ROUTES (avec rate limiting) ─────────────────────────────────────
+// ✅ Correction : une seule déclaration pour toutes les routes d'auth
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Upload routes (with auth middleware inside)
 app.use('/api/upload', uploadRoutes);
