@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/user.model');
 const { AppError } = require('../middleware/errorHandler');
-const { checkAndAwardBadges } = require('../services/badge.service'); // ✅ Ajout
+const { checkAndAwardBadges } = require('../services/badge.service');
 
 // Normalise un numéro : supprime espaces, tirets, points
 const normalizePhone = (p) => p ? p.replace(/[\s\-\.]/g, '') : p;
@@ -36,9 +36,9 @@ const serializeUser = (user) => ({
   isPremium:   user.isPremium,
   preferences: user.preferences,
   legalAccepted: user.legalAccepted || false,
-  isEmailVerified: user.isEmailVerified || false,   // ← AJOUT
-  createdAt: user.createdAt,                       // optionnel mais utile
-  updatedAt: user.updatedAt,                       // optionnel
+  isEmailVerified: user.isEmailVerified || false,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
 });
 
 // POST /api/auth/register
@@ -52,7 +52,7 @@ exports.register = async (req, res, next) => {
     }
 
     const { firstName, lastName, email, phone, age, city, gender,
-            password, anonymousAlias } = req.body;
+            password, anonymousAlias, legalAccepted } = req.body; // ← Ajout
 
     const name = `${firstName || ''} ${lastName || ''}`.trim() || null;
 
@@ -91,7 +91,7 @@ exports.register = async (req, res, next) => {
       gender:    gender         || null,
       password,
       anonymousAlias: anonymousAlias?.trim() || null,
-      // Sécurité
+      legalAccepted: legalAccepted === true, // ← Ajout (force booléen)
       lastActivity: new Date(),
     });
 
@@ -191,7 +191,7 @@ exports.login = async (req, res, next) => {
       accessToken,
       refreshToken,
       user: serializeUser(user),
-      newBadges, // ✅ Ajout des nouveaux badges débloqués
+      newBadges,
     });
   } catch (error) {
     next(error);
@@ -215,7 +215,7 @@ exports.refreshToken = async (req, res, next) => {
 
     const tokens = generateTokens(user._id);
     user.refreshToken = tokens.refreshToken;
-    user.lastActivity = new Date(); // Mettre à jour l'activité
+    user.lastActivity = new Date();
     await user.save({ validateBeforeSave: false });
 
     res.json(tokens);
